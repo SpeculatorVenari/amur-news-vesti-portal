@@ -15,6 +15,7 @@ import CategoryPage from "./pages/CategoryPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
+import CreateNews from "./pages/CreateNews";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
                 <Route path="/category/:category" element={<CategoryPage />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/create-news" element={<CreateNews />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>

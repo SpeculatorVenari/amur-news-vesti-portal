@@ -4,6 +4,7 @@ export interface User {
   username: string;
   email?: string;
   avatar?: string;
+  role?: 'user' | 'admin';
 }
 
 export interface Comment {
