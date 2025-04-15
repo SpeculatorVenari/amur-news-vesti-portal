@@ -16,7 +16,7 @@ const Index = () => {
       <div className="mb-8">
         <div className="flex items-center mb-6">
           <Newspaper className="text-amur-blue mr-2" size={24} />
-          <h1 className="text-3xl font-bold text-amur-dark">Общество</h1>
+          <h1 className="text-3xl font-bold text-amur-dark">Главное</h1>
         </div>
         <NewsList articles={societyNews} featured={true} />
       </div>

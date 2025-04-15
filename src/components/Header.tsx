@@ -32,7 +32,7 @@ const Header = () => {
             <Link to="/" className="text-2xl font-bold">АмурВести</Link>
             <div className="hidden md:flex items-center space-x-2">
               <Link to="/" className="px-3 py-2 rounded-md hover:bg-amur-lightBlue transition-colors">
-                Общество
+                Главное
               </Link>
               <Link to="/category/Экономика" className="px-3 py-2 rounded-md hover:bg-amur-lightBlue transition-colors">
                 Экономика
@@ -116,7 +116,7 @@ const Header = () => {
                 className="block px-3 py-2 rounded-md hover:bg-amur-lightBlue transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Общество
+                Главное
               </Link>
               <Link 
                 to="/category/Экономика" 

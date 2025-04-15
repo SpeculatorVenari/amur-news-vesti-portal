@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AtSign } from 'lucide-react';
 
 const Register = () => {
   const [username, setUsername] = useState('');
@@ -15,6 +16,8 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [passwordError, setPasswordError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const emailInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { register } = useAuth();
   const { toast } = useToast();
@@ -41,6 +44,19 @@ const Register = () => {
     setPasswordError(validatePassword(newPassword));
   };
   
+  const validateEmail = (email: string) => {
+    if (!email.includes('@')) {
+      return "Email должен содержать символ @";
+    }
+    return "";
+  };
+  
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEmail = e.target.value;
+    setEmail(newEmail);
+    setEmailError(validateEmail(newEmail));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -50,6 +66,17 @@ const Register = () => {
       toast({
         title: "Ошибка валидации",
         description: passwordValidationError,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const emailValidationError = validateEmail(email);
+    if (emailValidationError) {
+      setEmailError(emailValidationError);
+      toast({
+        title: "Ошибка валидации",
+        description: emailValidationError,
         variant: "destructive",
       });
       return;
@@ -117,14 +144,32 @@ const Register = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Введите email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center pointer-events-none opacity-40 pl-3">
+                  <AtSign className="h-5 w-5 text-gray-400" />
+                  {!email && (
+                    <span className="text-gray-400 ml-2">example@mail.ru</span>
+                  )}
+                </div>
+                <Input
+                  ref={emailInputRef}
+                  id="email"
+                  type="email"
+                  placeholder=""
+                  value={email}
+                  onChange={handleEmailChange}
+                  required
+                  className={`pl-10 ${emailError ? "border-red-500" : ""} ${!email ? "text-transparent" : ""}`}
+                />
+                {!email && (
+                  <div className="absolute inset-0" onClick={() => emailInputRef.current?.focus()}>
+                    <span className="sr-only">Фокус на поле email</span>
+                  </div>
+                )}
+              </div>
+              {emailError && (
+                <p className="text-red-500 text-sm">{emailError}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Пароль</Label>
@@ -158,7 +203,7 @@ const Register = () => {
             <Button 
               type="submit" 
               className="w-full bg-amur-blue hover:bg-amur-lightBlue"
-              disabled={isLoading || !!passwordError}
+              disabled={isLoading || !!passwordError || !!emailError}
             >
               {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
             </Button>
