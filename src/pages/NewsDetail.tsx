@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getNewsById } from '../data/newsData';
 import { NewsArticle, Comment } from '../types';
-import { CalendarIcon, ChevronLeft, User, Edit, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { CalendarIcon, ChevronLeft, User, Edit } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import CommentSection from '../components/CommentSection';
@@ -39,6 +39,17 @@ const NewsDetail = () => {
         // Инициализируем массивы лайков и дизлайков, если их нет
         if (!newsArticle.likes) newsArticle.likes = [];
         if (!newsArticle.dislikes) newsArticle.dislikes = [];
+        
+        // Инициализируем лайки и дизлайки для комментариев
+        if (newsArticle.comments) {
+          newsArticle.comments = newsArticle.comments.map(comment => ({
+            ...comment,
+            likes: comment.likes || [],
+            dislikes: comment.dislikes || [],
+            hidden: comment.hidden || false
+          }));
+        }
+        
         setArticle(newsArticle);
       }
       setIsLoading(false);
@@ -86,25 +97,7 @@ const NewsDetail = () => {
     }
     
     // Сохраняем обновленную статью в localStorage
-    const storedArticles = localStorage.getItem('newsArticles');
-    let newsArray = [];
-    
-    if (storedArticles) {
-      newsArray = JSON.parse(storedArticles);
-      const articleIndex = newsArray.findIndex((a: NewsArticle) => a.id === article.id);
-      
-      if (articleIndex !== -1) {
-        newsArray[articleIndex] = updatedArticle;
-      } else {
-        newsArray.push(updatedArticle);
-      }
-    } else {
-      newsArray.push(updatedArticle);
-    }
-    
-    localStorage.setItem('newsArticles', JSON.stringify(newsArray));
-    setArticle(updatedArticle);
-    window.dispatchEvent(new Event('storage'));
+    saveArticleToLocalStorage(updatedArticle);
   };
   
   const handleDislike = () => {
@@ -126,12 +119,17 @@ const NewsDetail = () => {
     }
     
     // Сохраняем обновленную статью в localStorage
+    saveArticleToLocalStorage(updatedArticle);
+  };
+  
+  // Функция для сохранения статьи в localStorage
+  const saveArticleToLocalStorage = (updatedArticle: NewsArticle) => {
     const storedArticles = localStorage.getItem('newsArticles');
     let newsArray = [];
     
     if (storedArticles) {
       newsArray = JSON.parse(storedArticles);
-      const articleIndex = newsArray.findIndex((a: NewsArticle) => a.id === article.id);
+      const articleIndex = newsArray.findIndex((a: NewsArticle) => a.id === article!.id);
       
       if (articleIndex !== -1) {
         newsArray[articleIndex] = updatedArticle;
@@ -145,6 +143,131 @@ const NewsDetail = () => {
     localStorage.setItem('newsArticles', JSON.stringify(newsArray));
     setArticle(updatedArticle);
     window.dispatchEvent(new Event('storage'));
+  };
+  
+  // Функция добавления комментария
+  const addComment = (content: string) => {
+    if (!user || !article) return;
+    
+    const newComment: Comment = {
+      id: Math.random().toString(36).substr(2, 9),
+      content,
+      author: user,
+      createdAt: new Date().toLocaleDateString('ru-RU'),
+      likes: [],
+      dislikes: [],
+      hidden: false
+    };
+    
+    const updatedArticle = {
+      ...article,
+      comments: [...article.comments, newComment],
+    };
+    
+    saveArticleToLocalStorage(updatedArticle);
+    toast({
+      title: "Комментарий добавлен",
+      description: "Ваш комментарий успешно опубликован",
+    });
+  };
+  
+  // Функция скрытия/показа комментария
+  const handleHideComment = (commentId: string) => {
+    if (!article) return;
+    
+    const updatedArticle = { ...article };
+    const commentIndex = updatedArticle.comments.findIndex(comment => comment.id === commentId);
+    
+    if (commentIndex !== -1) {
+      updatedArticle.comments[commentIndex].hidden = !updatedArticle.comments[commentIndex].hidden;
+      saveArticleToLocalStorage(updatedArticle);
+      
+      toast({
+        title: updatedArticle.comments[commentIndex].hidden ? "Комментарий скрыт" : "Комментарий показан",
+        description: updatedArticle.comments[commentIndex].hidden 
+          ? "Комментарий скрыт от обычных пользователей" 
+          : "Комментарий снова виден всем пользователям",
+      });
+    }
+  };
+  
+  // Функция удаления комментария
+  const handleDeleteComment = (commentId: string) => {
+    if (!article) return;
+    
+    const updatedArticle = { 
+      ...article,
+      comments: article.comments.filter(comment => comment.id !== commentId)
+    };
+    
+    saveArticleToLocalStorage(updatedArticle);
+    
+    toast({
+      title: "Комментарий удален",
+      description: "Комментарий был успешно удален",
+    });
+  };
+  
+  // Функция для лайка комментария
+  const handleLikeComment = (commentId: string) => {
+    if (!article || !user) return;
+    
+    const updatedArticle = { ...article };
+    const commentIndex = updatedArticle.comments.findIndex(comment => comment.id === commentId);
+    
+    if (commentIndex !== -1) {
+      // Инициализируем массивы лайков и дизлайков, если их нет
+      if (!updatedArticle.comments[commentIndex].likes) 
+        updatedArticle.comments[commentIndex].likes = [];
+      if (!updatedArticle.comments[commentIndex].dislikes) 
+        updatedArticle.comments[commentIndex].dislikes = [];
+      
+      const userId = user.id;
+      const likeIndex = updatedArticle.comments[commentIndex].likes.indexOf(userId);
+      const dislikeIndex = updatedArticle.comments[commentIndex].dislikes.indexOf(userId);
+      
+      if (likeIndex === -1) {
+        updatedArticle.comments[commentIndex].likes.push(userId);
+        if (dislikeIndex !== -1) {
+          updatedArticle.comments[commentIndex].dislikes.splice(dislikeIndex, 1);
+        }
+      } else {
+        updatedArticle.comments[commentIndex].likes.splice(likeIndex, 1);
+      }
+      
+      saveArticleToLocalStorage(updatedArticle);
+    }
+  };
+  
+  // Функция для дизлайка комментария
+  const handleDislikeComment = (commentId: string) => {
+    if (!article || !user) return;
+    
+    const updatedArticle = { ...article };
+    const commentIndex = updatedArticle.comments.findIndex(comment => comment.id === commentId);
+    
+    if (commentIndex !== -1) {
+      // Инициализируем массивы лайков и дизлайков, если их нет
+      if (!updatedArticle.comments[commentIndex].likes) 
+        updatedArticle.comments[commentIndex].likes = [];
+      if (!updatedArticle.comments[commentIndex].dislikes) 
+        updatedArticle.comments[commentIndex].dislikes = [];
+      
+      const userId = user.id;
+      const dislikeIndex = updatedArticle.comments[commentIndex].dislikes.indexOf(userId);
+      const likeIndex = updatedArticle.comments[commentIndex].likes.indexOf(userId);
+      
+      if (dislikeIndex === -1) {
+        updatedArticle.comments[commentIndex].dislikes.push(userId);
+        if (likeIndex !== -1) {
+          updatedArticle.comments[commentIndex].likes.splice(likeIndex, 1);
+        }
+      } else {
+        updatedArticle.comments[commentIndex].dislikes.splice(dislikeIndex, 1);
+      }
+      
+      saveArticleToLocalStorage(updatedArticle);
+    }
   };
   
   if (isLoading) {
@@ -170,43 +293,6 @@ const NewsDetail = () => {
       </div>
     );
   }
-  
-  const addComment = (content: string) => {
-    if (!user) return;
-    
-    const newComment: Comment = {
-      id: Math.random().toString(36).substr(2, 9),
-      content,
-      author: user,
-      createdAt: new Date().toLocaleDateString('ru-RU'),
-    };
-    
-    const updatedArticle = {
-      ...article,
-      comments: [...article.comments, newComment],
-    };
-    
-    setArticle(updatedArticle);
-    
-    // Сохраняем комментарий в localStorage
-    const storedArticles = localStorage.getItem('newsArticles');
-    let newsArray = [];
-    
-    if (storedArticles) {
-      newsArray = JSON.parse(storedArticles);
-      const articleIndex = newsArray.findIndex((a: NewsArticle) => a.id === article.id);
-      
-      if (articleIndex !== -1) {
-        newsArray[articleIndex] = updatedArticle;
-      } else {
-        newsArray.push(updatedArticle);
-      }
-    } else {
-      newsArray.push(updatedArticle);
-    }
-    
-    localStorage.setItem('newsArticles', JSON.stringify(newsArray));
-  };
   
   return (
     <div className="news-container py-8">
@@ -271,7 +357,15 @@ const NewsDetail = () => {
             />
           </div>
           
-          <CommentSection comments={article.comments} onAddComment={addComment} />
+          <CommentSection 
+            comments={article.comments} 
+            onAddComment={addComment}
+            onHideComment={isAdmin ? handleHideComment : undefined}
+            onDeleteComment={isAdmin ? handleDeleteComment : undefined}
+            onLikeComment={handleLikeComment}
+            onDislikeComment={handleDislikeComment}
+            articleId={article.id}
+          />
         </div>
       </div>
     </div>

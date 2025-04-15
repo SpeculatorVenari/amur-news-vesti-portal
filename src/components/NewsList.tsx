@@ -3,6 +3,14 @@ import React, { useEffect, useState } from 'react';
 import NewsCard from './NewsCard';
 import { NewsArticle } from '../types';
 import AdminButton from './AdminButton';
+import { 
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious
+} from '@/components/ui/pagination';
 
 interface NewsListProps {
   articles: NewsArticle[];
@@ -11,13 +19,15 @@ interface NewsListProps {
 
 const NewsList: React.FC<NewsListProps> = ({ articles: propArticles, featured = false }) => {
   const [articles, setArticles] = useState<NewsArticle[]>(propArticles);
+  const [currentPage, setCurrentPage] = useState(1);
+  const articlesPerPage = 20;
   
-  // Функция для сортировки статей по количеству лайков
-  const sortArticlesByLikes = (articlesToSort: NewsArticle[]) => {
+  // Функция для сортировки статей по дате (самые свежие сверху)
+  const sortArticlesByDate = (articlesToSort: NewsArticle[]) => {
     return [...articlesToSort].sort((a, b) => {
-      const aLikes = a.likes?.length || 0;
-      const bLikes = b.likes?.length || 0;
-      return bLikes - aLikes;
+      const dateA = new Date(a.date.split('.').reverse().join('-'));
+      const dateB = new Date(b.date.split('.').reverse().join('-'));
+      return dateB.getTime() - dateA.getTime();
     });
   };
   
@@ -43,8 +53,8 @@ const NewsList: React.FC<NewsListProps> = ({ articles: propArticles, featured = 
       updatedArticles = [...updatedArticles, ...newArticles];
     }
     
-    // Сортируем статьи по количеству лайков
-    const sortedArticles = sortArticlesByLikes(updatedArticles);
+    // Сортируем статьи по дате (самые свежие сверху)
+    const sortedArticles = sortArticlesByDate(updatedArticles);
     setArticles(sortedArticles);
   }, [propArticles]);
   
@@ -68,8 +78,8 @@ const NewsList: React.FC<NewsListProps> = ({ articles: propArticles, featured = 
         
         updatedArticles = [...updatedArticles, ...newArticles];
         
-        // Сортируем статьи по количеству лайков
-        const sortedArticles = sortArticlesByLikes(updatedArticles);
+        // Сортируем статьи по дате (самые свежие сверху)
+        const sortedArticles = sortArticlesByDate(updatedArticles);
         setArticles(sortedArticles);
       }
     };
@@ -77,6 +87,15 @@ const NewsList: React.FC<NewsListProps> = ({ articles: propArticles, featured = 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [articles]);
+
+  // Расчет индексов для пагинации
+  const indexOfLastArticle = currentPage * articlesPerPage;
+  const indexOfFirstArticle = indexOfLastArticle - articlesPerPage;
+  const currentArticles = articles.slice(indexOfFirstArticle, indexOfLastArticle);
+  const totalPages = Math.ceil(articles.length / articlesPerPage);
+
+  // Функция для изменения страницы
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   if (articles.length === 0) {
     return (
@@ -117,10 +136,49 @@ const NewsList: React.FC<NewsListProps> = ({ articles: propArticles, featured = 
         <AdminButton />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {articles.map((article) => (
+        {currentArticles.map((article) => (
           <NewsCard key={article.id} article={article} />
         ))}
       </div>
+      
+      {totalPages > 1 && (
+        <Pagination className="mt-8">
+          <PaginationContent>
+            {currentPage > 1 && (
+              <PaginationItem>
+                <PaginationPrevious href="#" onClick={(e) => {
+                  e.preventDefault();
+                  paginate(currentPage - 1);
+                }} />
+              </PaginationItem>
+            )}
+            
+            {[...Array(totalPages)].map((_, i) => (
+              <PaginationItem key={i}>
+                <PaginationLink 
+                  href="#" 
+                  isActive={currentPage === i + 1}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    paginate(i + 1);
+                  }}
+                >
+                  {i + 1}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+            
+            {currentPage < totalPages && (
+              <PaginationItem>
+                <PaginationNext href="#" onClick={(e) => {
+                  e.preventDefault();
+                  paginate(currentPage + 1);
+                }} />
+              </PaginationItem>
+            )}
+          </PaginationContent>
+        </Pagination>
+      )}
     </div>
   );
 };

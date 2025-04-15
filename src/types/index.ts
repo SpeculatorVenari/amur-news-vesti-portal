@@ -5,6 +5,7 @@ export interface User {
   email?: string;
   avatar?: string;
   role?: 'user' | 'admin';
+  banned?: boolean;
 }
 
 export interface Comment {
@@ -12,6 +13,9 @@ export interface Comment {
   content: string;
   author: User;
   createdAt: string;
+  likes?: string[]; // массив ID пользователей, которые поставили лайк
+  dislikes?: string[]; // массив ID пользователей, которые поставили дизлайк
+  hidden?: boolean; // скрыт ли комментарий администратором
 }
 
 export interface NewsArticle {
@@ -28,4 +32,4 @@ export interface NewsArticle {
   dislikes: string[]; // массив ID пользователей, которые поставили дизлайк
 }
 
-export type NewsCategory = 'Общество' | 'Экономика' | 'Культура' | 'Спорт' | 'Все';
+export type NewsCategory = 'Главное' | 'Экономика' | 'Культура' | 'Спорт' | 'Все';

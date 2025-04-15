@@ -8,7 +8,8 @@ import {
   ChevronDown, 
   User as UserIcon, 
   LogOut, 
-  Search as SearchIcon 
+  Search as SearchIcon,
+  Settings
 } from 'lucide-react';
 import { 
   DropdownMenu,
@@ -21,7 +22,7 @@ import {
 import { Input } from '@/components/ui/input';
 
 const Header = () => {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -71,6 +72,16 @@ const Header = () => {
                     <UserIcon className="mr-2 h-4 w-4" />
                     <span>Профиль</span>
                   </DropdownMenuItem>
+                  
+                  {isAdmin && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin">
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Панель администратора</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  
                   <DropdownMenuItem onClick={logout}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Выйти</span>
@@ -158,6 +169,20 @@ const Header = () => {
                     <UserIcon className="mr-2 h-4 w-4" />
                     <span>Профиль</span>
                   </Button>
+                  
+                  {isAdmin && (
+                    <Button 
+                      variant="ghost" 
+                      className="w-full justify-start text-white hover:bg-amur-lightBlue"
+                      asChild
+                    >
+                      <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Панель администратора</span>
+                      </Link>
+                    </Button>
+                  )}
+                  
                   <Button variant="ghost" onClick={logout} className="w-full justify-start text-white hover:bg-amur-lightBlue">
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Выйти</span>

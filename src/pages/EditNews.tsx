@@ -93,7 +93,7 @@ const EditNews = () => {
     <div className="news-container py-8">
       <h1 className="text-3xl font-bold mb-6 text-amur-dark">Редактирование новости</h1>
       <div className="bg-white p-6 rounded-lg shadow-md">
-        <NewsForm onSubmit={handleUpdateNews} initialData={article} />
+        <NewsForm onSubmit={handleUpdateNews} initialData={article as any} />
       </div>
     </div>
   );

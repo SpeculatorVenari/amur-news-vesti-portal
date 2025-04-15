@@ -8,7 +8,7 @@ import { Newspaper } from 'lucide-react';
 
 const Index = () => {
   const latestNews = getLatestNews(5);
-  const societyNews = getNewsByCategory('Общество');
+  const mainNews = getNewsByCategory('Главное');
   const categories: NewsCategory[] = ['Экономика', 'Культура', 'Спорт'];
   
   return (
@@ -18,7 +18,7 @@ const Index = () => {
           <Newspaper className="text-amur-blue mr-2" size={24} />
           <h1 className="text-3xl font-bold text-amur-dark">Главное</h1>
         </div>
-        <NewsList articles={societyNews} featured={true} />
+        <NewsList articles={mainNews} featured={true} />
       </div>
       
       <Tabs defaultValue="Экономика" className="mt-12">
