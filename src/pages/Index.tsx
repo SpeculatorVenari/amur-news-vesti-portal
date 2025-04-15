@@ -8,19 +8,20 @@ import { Newspaper } from 'lucide-react';
 
 const Index = () => {
   const latestNews = getLatestNews(5);
-  const categories: NewsCategory[] = ['Общество', 'Экономика', 'Культура', 'Спорт'];
+  const societyNews = getNewsByCategory('Общество');
+  const categories: NewsCategory[] = ['Экономика', 'Культура', 'Спорт'];
   
   return (
     <div className="news-container py-8">
       <div className="mb-8">
         <div className="flex items-center mb-6">
           <Newspaper className="text-amur-blue mr-2" size={24} />
-          <h1 className="text-3xl font-bold text-amur-dark">Последние новости</h1>
+          <h1 className="text-3xl font-bold text-amur-dark">Общество</h1>
         </div>
-        <NewsList articles={latestNews} featured={true} />
+        <NewsList articles={societyNews} featured={true} />
       </div>
       
-      <Tabs defaultValue="Общество" className="mt-12">
+      <Tabs defaultValue="Экономика" className="mt-12">
         <TabsList className="mb-6 bg-white border-b border-gray-200 w-full justify-start overflow-x-auto">
           {categories.map((category) => (
             <TabsTrigger 

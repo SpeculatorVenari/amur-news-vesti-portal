@@ -16,6 +16,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 import CreateNews from "./pages/CreateNews";
+import EditNews from "./pages/EditNews";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/create-news" element={<CreateNews />} />
+                <Route path="/edit-news/:id" element={<EditNews />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>

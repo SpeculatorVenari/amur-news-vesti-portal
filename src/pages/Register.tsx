@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const Register = () => {
@@ -14,12 +14,46 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
   const navigate = useNavigate();
   const { register } = useAuth();
   const { toast } = useToast();
   
+  const validatePassword = (pass: string) => {
+    if (pass.length < 12 || pass.length > 16) {
+      return "Пароль должен содержать от 12 до 16 символов";
+    }
+    
+    if (!/[a-zA-Z]/.test(pass)) {
+      return "Пароль должен содержать латинские буквы";
+    }
+    
+    if (!/\d/.test(pass)) {
+      return "Пароль должен содержать цифры";
+    }
+    
+    return "";
+  };
+  
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newPassword = e.target.value;
+    setPassword(newPassword);
+    setPasswordError(validatePassword(newPassword));
+  };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const passwordValidationError = validatePassword(password);
+    if (passwordValidationError) {
+      setPasswordError(passwordValidationError);
+      toast({
+        title: "Ошибка валидации",
+        description: passwordValidationError,
+        variant: "destructive",
+      });
+      return;
+    }
     
     if (password !== confirmPassword) {
       toast({
@@ -99,9 +133,16 @@ const Register = () => {
                 type="password"
                 placeholder="Введите пароль"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={handlePasswordChange}
                 required
+                className={passwordError ? "border-red-500" : ""}
               />
+              {passwordError && (
+                <p className="text-red-500 text-sm">{passwordError}</p>
+              )}
+              <p className="text-xs text-gray-500">
+                Пароль должен содержать от 12 до 16 символов, включая латинские буквы и цифры.
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Подтверждение пароля</Label>
@@ -117,7 +158,7 @@ const Register = () => {
             <Button 
               type="submit" 
               className="w-full bg-amur-blue hover:bg-amur-lightBlue"
-              disabled={isLoading}
+              disabled={isLoading || !!passwordError}
             >
               {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
             </Button>

@@ -1,30 +1,151 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getNewsById } from '../data/newsData';
 import { NewsArticle, Comment } from '../types';
-import { CalendarIcon, ChevronLeft, User } from 'lucide-react';
+import { CalendarIcon, ChevronLeft, User, Edit, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import CommentSection from '../components/CommentSection';
 import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
+import LikeDislikeButtons from '../components/LikeDislikeButtons';
 
 const NewsDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [article, setArticle] = useState<NewsArticle | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
-  useEffect(() => {
+  const loadArticle = () => {
     if (id) {
+      // Сначала ищем статью в localStorage
+      const storedArticles = localStorage.getItem('newsArticles');
+      if (storedArticles) {
+        const parsedArticles = JSON.parse(storedArticles);
+        const storedArticle = parsedArticles.find((a: NewsArticle) => a.id === id);
+        if (storedArticle) {
+          setArticle(storedArticle);
+          setIsLoading(false);
+          return;
+        }
+      }
+      
+      // Если в localStorage не найдено, берем из исходных данных
       const newsArticle = getNewsById(id);
       if (newsArticle) {
+        // Инициализируем массивы лайков и дизлайков, если их нет
+        if (!newsArticle.likes) newsArticle.likes = [];
+        if (!newsArticle.dislikes) newsArticle.dislikes = [];
         setArticle(newsArticle);
       }
       setIsLoading(false);
     }
+  };
+  
+  useEffect(() => {
+    loadArticle();
   }, [id]);
+  
+  // Слушаем события обновления localStorage
+  useEffect(() => {
+    const handleStorageChange = () => {
+      loadArticle();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [id]);
+  
+  const handleEdit = () => {
+    if (article) {
+      // Сохраняем статью во временное хранилище для редактирования
+      localStorage.setItem('editingArticle', JSON.stringify(article));
+      navigate(`/edit-news/${article.id}`);
+    }
+  };
+  
+  const handleLike = () => {
+    if (!article || !user) return;
+    
+    const updatedArticle = { ...article };
+    const userId = user.id;
+    
+    const likeIndex = updatedArticle.likes.indexOf(userId);
+    const dislikeIndex = updatedArticle.dislikes.indexOf(userId);
+    
+    if (likeIndex === -1) {
+      updatedArticle.likes.push(userId);
+      if (dislikeIndex !== -1) {
+        updatedArticle.dislikes.splice(dislikeIndex, 1);
+      }
+    } else {
+      updatedArticle.likes.splice(likeIndex, 1);
+    }
+    
+    // Сохраняем обновленную статью в localStorage
+    const storedArticles = localStorage.getItem('newsArticles');
+    let newsArray = [];
+    
+    if (storedArticles) {
+      newsArray = JSON.parse(storedArticles);
+      const articleIndex = newsArray.findIndex((a: NewsArticle) => a.id === article.id);
+      
+      if (articleIndex !== -1) {
+        newsArray[articleIndex] = updatedArticle;
+      } else {
+        newsArray.push(updatedArticle);
+      }
+    } else {
+      newsArray.push(updatedArticle);
+    }
+    
+    localStorage.setItem('newsArticles', JSON.stringify(newsArray));
+    setArticle(updatedArticle);
+    window.dispatchEvent(new Event('storage'));
+  };
+  
+  const handleDislike = () => {
+    if (!article || !user) return;
+    
+    const updatedArticle = { ...article };
+    const userId = user.id;
+    
+    const dislikeIndex = updatedArticle.dislikes.indexOf(userId);
+    const likeIndex = updatedArticle.likes.indexOf(userId);
+    
+    if (dislikeIndex === -1) {
+      updatedArticle.dislikes.push(userId);
+      if (likeIndex !== -1) {
+        updatedArticle.likes.splice(likeIndex, 1);
+      }
+    } else {
+      updatedArticle.dislikes.splice(dislikeIndex, 1);
+    }
+    
+    // Сохраняем обновленную статью в localStorage
+    const storedArticles = localStorage.getItem('newsArticles');
+    let newsArray = [];
+    
+    if (storedArticles) {
+      newsArray = JSON.parse(storedArticles);
+      const articleIndex = newsArray.findIndex((a: NewsArticle) => a.id === article.id);
+      
+      if (articleIndex !== -1) {
+        newsArray[articleIndex] = updatedArticle;
+      } else {
+        newsArray.push(updatedArticle);
+      }
+    } else {
+      newsArray.push(updatedArticle);
+    }
+    
+    localStorage.setItem('newsArticles', JSON.stringify(newsArray));
+    setArticle(updatedArticle);
+    window.dispatchEvent(new Event('storage'));
+  };
   
   if (isLoading) {
     return (
@@ -60,10 +181,31 @@ const NewsDetail = () => {
       createdAt: new Date().toLocaleDateString('ru-RU'),
     };
     
-    setArticle({
+    const updatedArticle = {
       ...article,
       comments: [...article.comments, newComment],
-    });
+    };
+    
+    setArticle(updatedArticle);
+    
+    // Сохраняем комментарий в localStorage
+    const storedArticles = localStorage.getItem('newsArticles');
+    let newsArray = [];
+    
+    if (storedArticles) {
+      newsArray = JSON.parse(storedArticles);
+      const articleIndex = newsArray.findIndex((a: NewsArticle) => a.id === article.id);
+      
+      if (articleIndex !== -1) {
+        newsArray[articleIndex] = updatedArticle;
+      } else {
+        newsArray.push(updatedArticle);
+      }
+    } else {
+      newsArray.push(updatedArticle);
+    }
+    
+    localStorage.setItem('newsArticles', JSON.stringify(newsArray));
   };
   
   return (
@@ -81,19 +223,33 @@ const NewsDetail = () => {
         />
         
         <div className="p-6">
-          <div className="flex flex-wrap items-center gap-3 mb-4">
-            <Badge className="bg-amur-blue text-white">
-              {article.category}
-            </Badge>
-            <div className="flex items-center text-gray-500">
-              <CalendarIcon size={16} className="mr-1" />
-              <span>{article.date}</span>
-            </div>
-            {article.author && (
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <Badge className="bg-amur-blue text-white">
+                {article.category}
+              </Badge>
               <div className="flex items-center text-gray-500">
-                <User size={16} className="mr-1" />
-                <span>{article.author}</span>
+                <CalendarIcon size={16} className="mr-1" />
+                <span>{article.date}</span>
               </div>
+              {article.author && (
+                <div className="flex items-center text-gray-500">
+                  <User size={16} className="mr-1" />
+                  <span>{article.author}</span>
+                </div>
+              )}
+            </div>
+            
+            {isAdmin && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex items-center gap-1"
+                onClick={handleEdit}
+              >
+                <Edit size={16} />
+                <span>Редактировать</span>
+              </Button>
             )}
           </div>
           
@@ -104,6 +260,16 @@ const NewsDetail = () => {
             className="prose max-w-none"
             dangerouslySetInnerHTML={{ __html: article.content }}
           />
+          
+          <div className="mt-8">
+            <LikeDislikeButtons 
+              articleId={article.id}
+              likes={article.likes || []}
+              dislikes={article.dislikes || []}
+              onLike={handleLike}
+              onDislike={handleDislike}
+            />
+          </div>
           
           <CommentSection comments={article.comments} onAddComment={addComment} />
         </div>

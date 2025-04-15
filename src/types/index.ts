@@ -24,6 +24,8 @@ export interface NewsArticle {
   date: string;
   author?: string;
   comments: Comment[];
+  likes: string[]; // массив ID пользователей, которые поставили лайк
+  dislikes: string[]; // массив ID пользователей, которые поставили дизлайк
 }
 
 export type NewsCategory = 'Общество' | 'Экономика' | 'Культура' | 'Спорт' | 'Все';

@@ -14,7 +14,9 @@ export const newsArticles: NewsArticle[] = [
     category: "Культура",
     date: "15 сентября 2024",
     author: "Иван Смирнов",
-    comments: []
+    comments: [],
+    likes: [],
+    dislikes: []
   },
   {
     id: "2",
@@ -28,7 +30,9 @@ export const newsArticles: NewsArticle[] = [
     category: "Общество",
     date: "14 сентября 2024",
     author: "Елена Петрова",
-    comments: []
+    comments: [],
+    likes: [],
+    dislikes: []
   },
   {
     id: "3",
@@ -42,7 +46,9 @@ export const newsArticles: NewsArticle[] = [
     category: "Экономика",
     date: "13 сентября 2024",
     author: "Максим Волков",
-    comments: []
+    comments: [],
+    likes: [],
+    dislikes: []
   },
   {
     id: "4",
@@ -56,7 +62,9 @@ export const newsArticles: NewsArticle[] = [
     category: "Спорт",
     date: "12 сентября 2024",
     author: "Алексей Игнатьев",
-    comments: []
+    comments: [],
+    likes: [],
+    dislikes: []
   },
   {
     id: "5",
@@ -70,7 +78,9 @@ export const newsArticles: NewsArticle[] = [
     category: "Общество",
     date: "11 сентября 2024",
     author: "Ольга Кузнецова",
-    comments: []
+    comments: [],
+    likes: [],
+    dislikes: []
   },
   {
     id: "6",
@@ -84,7 +94,9 @@ export const newsArticles: NewsArticle[] = [
     category: "Экономика",
     date: "10 сентября 2024",
     author: "Дмитрий Соколов",
-    comments: []
+    comments: [],
+    likes: [],
+    dislikes: []
   }
 ];
 
