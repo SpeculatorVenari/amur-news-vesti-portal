@@ -6,6 +6,7 @@ export interface User {
   avatar?: string;
   role?: 'user' | 'admin';
   banned?: boolean;
+  registrationDate?: string;
 }
 
 export interface Comment {
@@ -17,6 +18,7 @@ export interface Comment {
   dislikes?: string[]; // массив ID пользователей, которые поставили дизлайк
   hidden?: boolean; // скрыт ли комментарий администратором
   parentId?: string; // ID родительского комментария, если это ответ
+  replyingTo?: string; // имя пользователя, которому отвечают
   replies?: Comment[]; // ответы на комментарий
   articleId?: string; // ID статьи (для профиля пользователя)
   articleTitle?: string; // Заголовок статьи (для профиля пользователя)

@@ -4,14 +4,15 @@ import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { User, SiteSettings } from '../types';
-import { Ban, UserCheck, Search, UserX, Users, Settings, User as UserIcon, Info, Phone, Shield, Image } from 'lucide-react';
+import { User, SiteSettings, Comment } from '../types';
+import { Ban, UserCheck, Search, UserX, Users, Settings, Info, Phone, Shield, Image, MessageSquare, UserCog } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useForm } from 'react-hook-form';
 import { Label } from '@/components/ui/label';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import UserCommentsList from '../components/UserCommentsList';
+import { useForm } from 'react-hook-form';
 
 const AdminPanel = () => {
   const { isAdmin } = useAuth();
@@ -34,6 +35,8 @@ const AdminPanel = () => {
     privacy: '',
     ads: ''
   });
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [userComments, setUserComments] = useState<Comment[]>([]);
 
   const settingsForm = useForm<SiteSettings>({
     defaultValues: settings
@@ -100,6 +103,11 @@ const AdminPanel = () => {
       });
       
       localStorage.setItem('users', JSON.stringify(updatedStoredUsers));
+
+      // Reset user's likes and dislikes if banned
+      if (updatedDisplayUsers.find(u => u.id === userId)?.banned) {
+        removeUserInteractions(userId);
+      }
     }
     
     const user = updatedDisplayUsers.find(u => u.id === userId);
@@ -109,6 +117,95 @@ const AdminPanel = () => {
         description: `Пользователь ${user.username} успешно ${user.banned ? "заблокирован" : "разблокирован"}`,
       });
     }
+  };
+
+  // Remove all user interactions (likes, dislikes) when banned
+  const removeUserInteractions = (userId: string) => {
+    const articlesData = localStorage.getItem('articles');
+    if (articlesData) {
+      const articles = JSON.parse(articlesData);
+      
+      const updatedArticles = articles.map((article: any) => {
+        // Remove likes/dislikes from article
+        const updatedArticle = {
+          ...article,
+          likes: article.likes.filter((id: string) => id !== userId),
+          dislikes: article.dislikes.filter((id: string) => id !== userId)
+        };
+        
+        // Remove likes/dislikes from comments
+        const processComments = (comments: Comment[]): Comment[] => {
+          return comments.map(comment => {
+            const updatedComment = {
+              ...comment,
+              likes: comment.likes?.filter(id => id !== userId) || [],
+              dislikes: comment.dislikes?.filter(id => id !== userId) || []
+            };
+            
+            if (comment.replies && comment.replies.length > 0) {
+              updatedComment.replies = processComments(comment.replies);
+            }
+            
+            return updatedComment;
+          });
+        };
+        
+        updatedArticle.comments = processComments(article.comments || []);
+        
+        return updatedArticle;
+      });
+      
+      localStorage.setItem('articles', JSON.stringify(updatedArticles));
+    }
+  };
+
+  const loadUserComments = (userId: string) => {
+    const articlesData = localStorage.getItem('articles');
+    if (!articlesData) {
+      setUserComments([]);
+      return;
+    }
+    
+    try {
+      const articles = JSON.parse(articlesData);
+      const allComments: Comment[] = [];
+      
+      articles.forEach((article: any) => {
+        if (article.comments && Array.isArray(article.comments)) {
+          const collectComments = (comments: Comment[], articleInfo: any) => {
+            comments.forEach((comment: Comment) => {
+              if (comment.author.id === userId) {
+                allComments.push({
+                  ...comment,
+                  articleId: article.id,
+                  articleTitle: article.title
+                });
+              }
+              
+              if (comment.replies && comment.replies.length > 0) {
+                collectComments(comment.replies, articleInfo);
+              }
+            });
+          };
+          
+          collectComments(article.comments, {
+            id: article.id,
+            title: article.title
+          });
+        }
+      });
+      
+      setUserComments(allComments);
+    } catch (error) {
+      console.error('Error loading user comments:', error);
+      setUserComments([]);
+    }
+  };
+
+  const showUserComments = (userId: string) => {
+    setSelectedUserId(userId);
+    loadUserComments(userId);
+    setActiveTab('userComments');
   };
 
   const saveSettings = (data: SiteSettings) => {
@@ -154,7 +251,7 @@ const AdminPanel = () => {
         
         <CardContent>
           <Tabs defaultValue="dashboard" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-6">
+            <TabsList className="mb-6 flex flex-wrap justify-center">
               <TabsTrigger value="dashboard" className="flex items-center">
                 <Settings className="mr-2 h-4 w-4" />
                 Главная
@@ -179,6 +276,12 @@ const AdminPanel = () => {
                 <Image className="mr-2 h-4 w-4" />
                 Реклама
               </TabsTrigger>
+              {selectedUserId && (
+                <TabsTrigger value="userComments" className="flex items-center">
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  Комментарии пользователя
+                </TabsTrigger>
+              )}
             </TabsList>
             
             <TabsContent value="dashboard">
@@ -252,7 +355,14 @@ const AdminPanel = () => {
                         <tr key={user.id} className="border-b border-gray-200">
                           <td className="p-3">{user.username}</td>
                           <td className="p-3">{user.email || 'Н/Д'}</td>
-                          <td className="p-3">{user.role === 'admin' ? 'Администратор' : 'Пользователь'}</td>
+                          <td className="p-3">
+                            {user.role === 'admin' ? (
+                              <span className="inline-flex items-center">
+                                <UserCog size={16} className="mr-1 text-purple-600" />
+                                Администратор
+                              </span>
+                            ) : 'Пользователь'}
+                          </td>
                           <td className="p-3">
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                               user.banned ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
@@ -270,7 +380,16 @@ const AdminPanel = () => {
                               )}
                             </span>
                           </td>
-                          <td className="p-3">
+                          <td className="p-3 flex space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => showUserComments(user.id)}
+                              className="flex items-center space-x-1 text-blue-600 hover:bg-blue-50"
+                            >
+                              <MessageSquare size={16} />
+                              <span>Комментарии</span>
+                            </Button>
                             {user.role !== 'admin' && (
                               <Button
                                 variant="outline"
@@ -308,6 +427,27 @@ const AdminPanel = () => {
                   </tbody>
                 </table>
               </div>
+            </TabsContent>
+            
+            <TabsContent value="userComments">
+              {selectedUserId && (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold">
+                      Комментарии пользователя: {users.find(u => u.id === selectedUserId)?.username}
+                    </h3>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setActiveTab('users')}
+                    >
+                      Вернуться к списку пользователей
+                    </Button>
+                  </div>
+                  
+                  <UserCommentsList comments={userComments} />
+                </div>
+              )}
             </TabsContent>
             
             <TabsContent value="contacts">

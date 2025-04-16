@@ -1,9 +1,26 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { SiteSettings } from '../types';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const [contacts, setContacts] = useState({
+    address: 'г. Благовещенск, ул. Ленина, 139',
+    phone: '+7 (4162) 99-99-99',
+    email: 'info@amurvesti.ru'
+  });
+  
+  useEffect(() => {
+    // Load contact information from siteSettings if available
+    const storedSettings = localStorage.getItem('siteSettings');
+    if (storedSettings) {
+      const settings: SiteSettings = JSON.parse(storedSettings);
+      if (settings.contacts) {
+        setContacts(settings.contacts);
+      }
+    }
+  }, []);
   
   return (
     <footer className="bg-amur-dark text-white mt-10">
@@ -38,9 +55,9 @@ const Footer = () => {
           
           <div>
             <h3 className="text-lg font-bold mb-4">Контакты</h3>
-            <p className="text-gray-300 mb-2">г. Благовещенск, ул. Ленина, 139</p>
-            <p className="text-gray-300 mb-2">Телефон: +7 (4162) 99-99-99</p>
-            <p className="text-gray-300 mb-2">Email: info@amurvesti.ru</p>
+            <p className="text-gray-300 mb-2">{contacts.address}</p>
+            <p className="text-gray-300 mb-2">Телефон: {contacts.phone}</p>
+            <p className="text-gray-300 mb-2">Email: {contacts.email}</p>
           </div>
         </div>
         

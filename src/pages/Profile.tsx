@@ -1,26 +1,31 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import { Comment } from '@/types';
-import { Pencil, Check, X } from 'lucide-react';
+import { Pencil, Check, X, Eye, EyeOff, Lock, Reply } from 'lucide-react';
 
 const Profile = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [editing, setEditing] = useState<'username' | 'email' | null>(null);
+  const [editing, setEditing] = useState<'username' | 'email' | 'password' | null>(null);
   const [newUsername, setNewUsername] = useState('');
   const [newEmail, setNewEmail] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [usernameError, setUsernameError] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const [userComments, setUserComments] = useState<Comment[]>([]);
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
@@ -29,22 +34,26 @@ const Profile = () => {
   const MAX_USERNAME_LENGTH = 15;
 
   useEffect(() => {
-    // Redirect if not authenticated
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
 
-    // Set user data
     if (user) {
       setNewUsername(user.username);
       setNewEmail(user.email || '');
       
-      // Get registration date (mock implementation)
-      // In a real app this would come from the user object
-      setRegistrationDate('01.01.2024'); // Placeholder date
+      const storedUsers = localStorage.getItem('users');
+      if (storedUsers) {
+        const users = JSON.parse(storedUsers);
+        const foundUser = users.find((u: any) => u.id === user.id);
+        if (foundUser && foundUser.registrationDate) {
+          setRegistrationDate(foundUser.registrationDate);
+        } else {
+          setRegistrationDate('01.01.2024');
+        }
+      }
       
-      // Load user comments from all articles
       loadUserComments();
     }
   }, [isAuthenticated, user, navigate]);
@@ -52,7 +61,6 @@ const Profile = () => {
   const loadUserComments = () => {
     if (!user) return;
     
-    // Get all articles from localStorage
     const articlesData = localStorage.getItem('articles');
     if (!articlesData) return;
     
@@ -60,18 +68,27 @@ const Profile = () => {
       const articles = JSON.parse(articlesData);
       const allComments: Comment[] = [];
       
-      // Extract comments from all articles where the user is the author
       articles.forEach((article: any) => {
         if (article.comments && Array.isArray(article.comments)) {
-          article.comments.forEach((comment: Comment) => {
-            if (comment.author.id === user.id) {
-              // Add article info to the comment for context
-              allComments.push({
-                ...comment,
-                articleId: article.id,
-                articleTitle: article.title
-              });
-            }
+          const collectComments = (comments: Comment[], articleInfo: any) => {
+            comments.forEach((comment: Comment) => {
+              if (comment.author.id === user.id) {
+                allComments.push({
+                  ...comment,
+                  articleId: article.id,
+                  articleTitle: article.title
+                });
+              }
+              
+              if (comment.replies && comment.replies.length > 0) {
+                collectComments(comment.replies, articleInfo);
+              }
+            });
+          };
+          
+          collectComments(article.comments, {
+            id: article.id,
+            title: article.title
           });
         }
       });
@@ -100,7 +117,6 @@ const Profile = () => {
     
     setIsCheckingUsername(true);
     
-    // Check if username already exists
     const storedUsers = localStorage.getItem('users');
     if (storedUsers) {
       const users = JSON.parse(storedUsers);
@@ -140,7 +156,6 @@ const Profile = () => {
     
     setIsCheckingEmail(true);
     
-    // Check if email already exists
     const storedUsers = localStorage.getItem('users');
     if (storedUsers) {
       const users = JSON.parse(storedUsers);
@@ -162,12 +177,50 @@ const Profile = () => {
     return true;
   };
 
+  const verifyCurrentPassword = () => {
+    if (!currentPassword) {
+      setPasswordError('Введите текущий пароль');
+      return false;
+    }
+    
+    const storedUsers = localStorage.getItem('users');
+    if (storedUsers && user) {
+      const users = JSON.parse(storedUsers);
+      const foundUser = users.find((u: any) => u.id === user.id);
+      
+      if (foundUser && foundUser.password === currentPassword) {
+        return true;
+      }
+    }
+    
+    setPasswordError('Неверный текущий пароль');
+    return false;
+  };
+
+  const validateNewPassword = () => {
+    if (!newPassword) {
+      setPasswordError('Введите новый пароль');
+      return false;
+    }
+    
+    if (newPassword.length < 6) {
+      setPasswordError('Пароль должен содержать минимум 6 символов');
+      return false;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Пароли не совпадают');
+      return false;
+    }
+    
+    return true;
+  };
+
   const handleSaveUsername = () => {
     if (!checkUsernameAvailability(newUsername)) {
       return;
     }
     
-    // Update username in localStorage
     updateUserData({ username: newUsername });
     setEditing(null);
     
@@ -182,7 +235,6 @@ const Profile = () => {
       return;
     }
     
-    // Update email in localStorage
     updateUserData({ email: newEmail });
     setEditing(null);
     
@@ -192,10 +244,39 @@ const Profile = () => {
     });
   };
 
+  const handleSavePassword = () => {
+    if (!verifyCurrentPassword() || !validateNewPassword()) {
+      return;
+    }
+    
+    const storedUsers = localStorage.getItem('users');
+    if (storedUsers && user) {
+      const users = JSON.parse(storedUsers);
+      const updatedUsers = users.map((u: any) => {
+        if (u.id === user.id) {
+          return { ...u, password: newPassword };
+        }
+        return u;
+      });
+      
+      localStorage.setItem('users', JSON.stringify(updatedUsers));
+      
+      setEditing(null);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setPasswordError('');
+      
+      toast({
+        title: "Успешно",
+        description: "Пароль успешно изменен",
+      });
+    }
+  };
+
   const updateUserData = (updatedFields: {[key: string]: any}) => {
     if (!user) return;
     
-    // Update users in localStorage
     const storedUsers = localStorage.getItem('users');
     if (storedUsers) {
       const users = JSON.parse(storedUsers);
@@ -208,14 +289,12 @@ const Profile = () => {
       
       localStorage.setItem('users', JSON.stringify(updatedUsers));
       
-      // Update current user in localStorage
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         const currentUser = JSON.parse(storedUser);
         const updatedUser = { ...currentUser, ...updatedFields };
         localStorage.setItem('user', JSON.stringify(updatedUser));
         
-        // Update user in context through page reload
         window.location.reload();
       }
     }
@@ -356,8 +435,107 @@ const Profile = () => {
               </div>
 
               <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="password">Пароль</Label>
+                  {editing === 'password' ? (
+                    <div className="flex space-x-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={handleSavePassword}
+                        disabled={!!passwordError && (passwordError !== 'Введите текущий пароль')}
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => {
+                          setEditing(null);
+                          setCurrentPassword('');
+                          setNewPassword('');
+                          setConfirmPassword('');
+                          setPasswordError('');
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button variant="ghost" size="sm" onClick={() => setEditing('password')}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+                
+                {editing === 'password' ? (
+                  <div className="space-y-3">
+                    <div>
+                      <div className="relative">
+                        <Input
+                          id="currentPassword"
+                          type={showCurrentPassword ? "text" : "password"}
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          placeholder="Текущий пароль"
+                          className={passwordError === 'Неверный текущий пароль' ? "border-red-500 pr-10" : "pr-10"}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
+                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        >
+                          {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    <div className="relative">
+                      <Input
+                        id="newPassword"
+                        type={showNewPassword ? "text" : "password"}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="Новый пароль"
+                        className="pr-10"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                      >
+                        {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </Button>
+                    </div>
+                    
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Подтвердите новый пароль"
+                    />
+                    
+                    {passwordError && (
+                      <p className="text-red-500 text-sm">{passwordError}</p>
+                    )}
+                    
+                    <p className="text-sm text-gray-500">
+                      Пароль должен содержать минимум 6 символов
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-lg font-medium">••••••••</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
                 <Label>Дата регистрации</Label>
-                <p className="text-lg font-medium">{registrationDate}</p>
+                <p className="text-lg font-medium">{registrationDate || 'Не указана'}</p>
               </div>
             </CardContent>
           </Card>
@@ -373,7 +551,7 @@ const Profile = () => {
               {userComments.length > 0 ? (
                 <div className="space-y-4">
                   {userComments.map(comment => (
-                    <div key={comment.id} className="border rounded-md p-4">
+                    <div key={comment.id} className={`border rounded-md p-4 ${comment.hidden ? 'border-orange-300' : ''}`}>
                       <div className="flex justify-between mb-2">
                         <h4 className="font-semibold">
                           <span 
@@ -385,12 +563,23 @@ const Profile = () => {
                         </h4>
                         <span className="text-sm text-gray-500">{comment.createdAt}</span>
                       </div>
+                      
+                      {comment.replyingTo && (
+                        <div className="text-sm text-gray-500 mb-2 flex items-center">
+                          <Reply size={14} className="mr-1 rotate-180" />
+                          Ответ пользователю <span className="font-medium ml-1">{comment.replyingTo}</span>
+                        </div>
+                      )}
+                      
                       <p className="text-gray-700">{comment.content}</p>
                       {comment.hidden && (
                         <p className="text-orange-500 text-sm mt-2">
                           Этот комментарий скрыт администратором
                         </p>
                       )}
+                      <div className="mt-2 text-sm text-gray-500">
+                        {comment.likes?.length || 0} лайков • {comment.dislikes?.length || 0} дизлайков
+                      </div>
                     </div>
                   ))}
                 </div>
