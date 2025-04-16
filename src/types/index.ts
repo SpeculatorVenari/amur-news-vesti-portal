@@ -16,6 +16,10 @@ export interface Comment {
   likes?: string[]; // массив ID пользователей, которые поставили лайк
   dislikes?: string[]; // массив ID пользователей, которые поставили дизлайк
   hidden?: boolean; // скрыт ли комментарий администратором
+  parentId?: string; // ID родительского комментария, если это ответ
+  replies?: Comment[]; // ответы на комментарий
+  articleId?: string; // ID статьи (для профиля пользователя)
+  articleTitle?: string; // Заголовок статьи (для профиля пользователя)
 }
 
 export interface NewsArticle {

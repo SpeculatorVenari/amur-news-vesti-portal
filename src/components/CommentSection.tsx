@@ -7,11 +7,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/components/ui/use-toast';
 import CommentLikeDislike from './CommentLikeDislike';
-import { Eye, EyeOff, Trash2 } from 'lucide-react';
+import { Eye, EyeOff, Trash2, Reply, X } from 'lucide-react';
 
 interface CommentSectionProps {
   comments: Comment[];
-  onAddComment: (comment: string) => void;
+  onAddComment: (comment: string, parentId?: string) => void;
   onHideComment?: (commentId: string) => void;
   onDeleteComment?: (commentId: string) => void;
   onLikeComment?: (commentId: string) => void;
@@ -30,6 +30,8 @@ const CommentSection: React.FC<CommentSectionProps> = ({
 }) => {
   const { isAuthenticated, user, isAdmin } = useAuth();
   const [commentText, setCommentText] = useState('');
+  const [replyToId, setReplyToId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
   const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -53,14 +55,62 @@ const CommentSection: React.FC<CommentSectionProps> = ({
     });
   };
 
+  const handleReply = (commentId: string) => {
+    if (!replyText.trim()) {
+      toast({
+        title: "Ошибка",
+        description: "Ответ не может быть пустым",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    onAddComment(replyText, commentId);
+    setReplyText('');
+    setReplyToId(null);
+    
+    toast({
+      title: "Успешно",
+      description: "Ваш ответ добавлен",
+    });
+  };
+
   const getInitials = (name: string) => {
     return name.split(' ').map((n) => n[0]).join('').toUpperCase();
   };
 
-  // Сортируем комментарии по количеству лайков (самые залайканные выше)
-  const sortedComments = [...comments].sort((a, b) => 
-    (b.likes?.length || 0) - (a.likes?.length || 0)
-  );
+  // Преобразуем комментарии в древовидную структуру
+  const organizeComments = (flatComments: Comment[]) => {
+    const commentMap = new Map<string, Comment>();
+    const rootComments: Comment[] = [];
+    
+    // Сначала создаем карту для всех комментариев
+    flatComments.forEach(comment => {
+      // Клонируем комментарий и убеждаемся, что у него есть массив replies
+      const commentCopy = { ...comment, replies: [] };
+      commentMap.set(comment.id, commentCopy);
+    });
+    
+    // Затем организуем комментарии в древовидную структуру
+    flatComments.forEach(comment => {
+      if (comment.parentId && commentMap.has(comment.parentId)) {
+        // Это ответный комментарий, добавляем его к родительскому
+        const parentComment = commentMap.get(comment.parentId)!;
+        if (!parentComment.replies) {
+          parentComment.replies = [];
+        }
+        parentComment.replies.push(commentMap.get(comment.id)!);
+      } else {
+        // Это корневой комментарий
+        rootComments.push(commentMap.get(comment.id)!);
+      }
+    });
+    
+    // Сортируем комментарии по количеству лайков (самые залайканные выше)
+    return rootComments.sort((a, b) => 
+      (b.likes?.length || 0) - (a.likes?.length || 0)
+    );
+  };
 
   // Функция для обработки лайка комментария
   const handleLikeComment = (commentId: string) => {
@@ -82,6 +132,135 @@ const CommentSection: React.FC<CommentSectionProps> = ({
     if (isAdmin) return true;
     if (user && comment.author.id === user.id) return true;
     return false;
+  };
+
+  // Организуем комментарии в древовидную структуру
+  const organizedComments = organizeComments(comments);
+
+  // Компонент для отображения комментария
+  const CommentItem = ({ comment, isReply = false }: { comment: Comment, isReply?: boolean }) => {
+    if (!canSeeHiddenComment(comment)) return null;
+    
+    return (
+      <div className={`${isReply ? 'ml-8 mt-3' : ''} bg-white p-4 rounded-md shadow-sm ${comment.hidden ? 'border-l-4 border-orange-400' : ''}`}>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center">
+            <Avatar className="h-10 w-10 mr-3">
+              {comment.author.avatar ? (
+                <img src={comment.author.avatar} alt={comment.author.username} />
+              ) : (
+                <AvatarFallback>{getInitials(comment.author.username)}</AvatarFallback>
+              )}
+            </Avatar>
+            <div>
+              <div className="font-semibold">{comment.author.username}</div>
+              <div className="text-sm text-gray-500">{comment.createdAt}</div>
+            </div>
+          </div>
+          
+          {/* Админ-функции для комментариев */}
+          {isAdmin && (
+            <div className="flex space-x-2">
+              {onHideComment && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  title={comment.hidden ? "Показать комментарий" : "Скрыть комментарий"}
+                  onClick={() => onHideComment(comment.id)}
+                >
+                  {comment.hidden ? <Eye size={16} /> : <EyeOff size={16} />}
+                </Button>
+              )}
+              
+              {onDeleteComment && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  title="Удалить комментарий"
+                  onClick={() => onDeleteComment(comment.id)}
+                  className="text-red-500 hover:bg-red-50"
+                >
+                  <Trash2 size={16} />
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+        
+        <p className="text-gray-700 mb-3">{comment.content}</p>
+        
+        {comment.hidden && (
+          <div className="text-sm text-orange-500 mb-3">
+            {isAdmin ? 'Этот комментарий скрыт для обычных пользователей' : 'Этот комментарий скрыт администратором'}
+          </div>
+        )}
+        
+        <div className="flex justify-between items-center">
+          <CommentLikeDislike
+            commentId={comment.id}
+            likes={comment.likes || []}
+            dislikes={comment.dislikes || []}
+            onLike={() => handleLikeComment(comment.id)}
+            onDislike={() => handleDislikeComment(comment.id)}
+          />
+          
+          {isAuthenticated && !isReply && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-gray-500 hover:text-amur-blue"
+              onClick={() => setReplyToId(replyToId === comment.id ? null : comment.id)}
+            >
+              <Reply size={16} className="mr-1" />
+              {replyToId === comment.id ? "Отмена" : "Ответить"}
+            </Button>
+          )}
+        </div>
+        
+        {/* Форма для ответа на комментарий */}
+        {replyToId === comment.id && (
+          <div className="mt-3 border-t pt-3">
+            <div className="flex items-start space-x-2">
+              <Textarea
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                placeholder="Напишите ваш ответ..."
+                className="flex-1 text-sm"
+                rows={2}
+              />
+              <div className="flex flex-col space-y-2">
+                <Button 
+                  size="sm" 
+                  className="bg-amur-blue hover:bg-amur-lightBlue"
+                  onClick={() => handleReply(comment.id)}
+                >
+                  Отправить
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="ghost"
+                  onClick={() => {
+                    setReplyToId(null);
+                    setReplyText('');
+                  }}
+                >
+                  <X size={14} />
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Отображаем ответы на комментарий */}
+        {comment.replies && comment.replies.length > 0 && (
+          <div className="mt-3 space-y-3">
+            {comment.replies.map(reply => (
+              <CommentItem key={reply.id} comment={reply} isReply={true} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -108,72 +287,10 @@ const CommentSection: React.FC<CommentSectionProps> = ({
         </div>
       )}
       
-      {sortedComments.length > 0 ? (
+      {organizedComments.length > 0 ? (
         <div className="space-y-6">
-          {sortedComments.map((comment) => (
-            canSeeHiddenComment(comment) && (
-              <div key={comment.id} className={`bg-white p-4 rounded-md shadow-sm ${comment.hidden ? 'border-l-4 border-orange-400' : ''}`}>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center">
-                    <Avatar className="h-10 w-10 mr-3">
-                      {comment.author.avatar ? (
-                        <img src={comment.author.avatar} alt={comment.author.username} />
-                      ) : (
-                        <AvatarFallback>{getInitials(comment.author.username)}</AvatarFallback>
-                      )}
-                    </Avatar>
-                    <div>
-                      <div className="font-semibold">{comment.author.username}</div>
-                      <div className="text-sm text-gray-500">{comment.createdAt}</div>
-                    </div>
-                  </div>
-                  
-                  {/* Админ-функции для комментариев */}
-                  {isAdmin && (
-                    <div className="flex space-x-2">
-                      {onHideComment && (
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          title={comment.hidden ? "Показать комментарий" : "Скрыть комментарий"}
-                          onClick={() => onHideComment(comment.id)}
-                        >
-                          {comment.hidden ? <Eye size={16} /> : <EyeOff size={16} />}
-                        </Button>
-                      )}
-                      
-                      {onDeleteComment && (
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          title="Удалить комментарий"
-                          onClick={() => onDeleteComment(comment.id)}
-                          className="text-red-500 hover:bg-red-50"
-                        >
-                          <Trash2 size={16} />
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
-                
-                <p className="text-gray-700 mb-3">{comment.content}</p>
-                
-                {comment.hidden && (
-                  <div className="text-sm text-orange-500 mb-3">
-                    {isAdmin ? 'Этот комментарий скрыт для обычных пользователей' : 'Этот комментарий скрыт администратором'}
-                  </div>
-                )}
-                
-                <CommentLikeDislike
-                  commentId={comment.id}
-                  likes={comment.likes || []}
-                  dislikes={comment.dislikes || []}
-                  onLike={() => handleLikeComment(comment.id)}
-                  onDislike={() => handleDislikeComment(comment.id)}
-                />
-              </div>
-            )
+          {organizedComments.map(comment => (
+            <CommentItem key={comment.id} comment={comment} />
           ))}
         </div>
       ) : (

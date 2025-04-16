@@ -13,6 +13,7 @@ interface AuthContextType {
 
 interface StoredUser extends User {
   password: string;
+  registrationDate?: string; // Добавляем дату регистрации
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -39,13 +40,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem('users');
         localStorage.removeItem('user');
         
+        // Текущая дата для регистрации
+        const currentDate = new Date().toLocaleDateString('ru-RU');
+        
         // Создаем аккаунт администратора
         const adminUser: StoredUser = {
           id: 'admin-id',
           username: 'admin',
           email: 'admin@example.com',
           role: 'admin',
-          password: 'admin228'
+          password: 'admin228',
+          registrationDate: currentDate
         };
         
         localStorage.setItem('users', JSON.stringify([adminUser]));
@@ -133,13 +138,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
     
+    // Текущая дата для регистрации
+    const currentDate = new Date().toLocaleDateString('ru-RU');
+    
     // Создаем нового пользователя
     const newUser: StoredUser = {
       id: Math.random().toString(36).substr(2, 9),
       username,
       email,
       role: 'user',
-      password
+      password,
+      registrationDate: currentDate
     };
     
     // Добавляем пользователя в список и сохраняем

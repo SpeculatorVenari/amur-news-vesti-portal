@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { 
@@ -29,6 +29,12 @@ import { Input } from '@/components/ui/input';
 const Header = () => {
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   return (
     <header className="bg-amur-blue text-white shadow-md sticky top-0 z-50">
@@ -115,9 +121,11 @@ const Header = () => {
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel>Мой аккаунт</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <UserIcon className="mr-2 h-4 w-4" />
-                    <span>Профиль</span>
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile" className="flex items-center">
+                      <UserIcon className="mr-2 h-4 w-4" />
+                      <span>Профиль</span>
+                    </Link>
                   </DropdownMenuItem>
                   
                   {isAdmin && (
@@ -129,18 +137,18 @@ const Header = () => {
                     </DropdownMenuItem>
                   )}
                   
-                  <DropdownMenuItem onClick={logout}>
+                  <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Выйти</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <div className="space-x-2">
-                <Button asChild variant="secondary" className="bg-white text-amur-blue hover:bg-gray-100">
+              <div className="flex items-center space-x-2">
+                <Button asChild variant="secondary" className="bg-white text-amur-blue hover:bg-gray-100 shadow-sm">
                   <Link to="/login">Войти</Link>
                 </Button>
-                <Button asChild className="bg-amur-lightBlue hover:bg-blue-600 text-white">
+                <Button asChild className="bg-amur-lightBlue hover:bg-blue-600 text-white shadow-sm">
                   <Link to="/register">Регистрация</Link>
                 </Button>
               </div>
@@ -257,9 +265,15 @@ const Header = () => {
               {isAuthenticated ? (
                 <div className="space-y-2">
                   <p className="px-3 py-1">{user?.username}</p>
-                  <Button variant="ghost" className="w-full justify-start text-white hover:bg-amur-lightBlue">
-                    <UserIcon className="mr-2 h-4 w-4" />
-                    <span>Профиль</span>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start text-white hover:bg-amur-lightBlue"
+                    asChild
+                  >
+                    <Link to="/profile" onClick={() => setMobileMenuOpen(false)}>
+                      <UserIcon className="mr-2 h-4 w-4" />
+                      <span>Профиль</span>
+                    </Link>
                   </Button>
                   
                   {isAdmin && (
@@ -275,7 +289,7 @@ const Header = () => {
                     </Button>
                   )}
                   
-                  <Button variant="ghost" onClick={logout} className="w-full justify-start text-white hover:bg-amur-lightBlue">
+                  <Button variant="ghost" onClick={handleLogout} className="w-full justify-start text-white hover:bg-amur-lightBlue">
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Выйти</span>
                   </Button>

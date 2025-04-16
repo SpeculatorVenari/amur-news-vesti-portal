@@ -19,6 +19,7 @@ import CreateNews from "./pages/CreateNews";
 import EditNews from "./pages/EditNews";
 import AdminPanel from "./pages/AdminPanel";
 import AboutPage from "./pages/AboutPage";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ const App = () => (
                 <Route path="/edit-news/:id" element={<EditNews />} />
                 <Route path="/admin" element={<AdminPanel />} />
                 <Route path="/about/:section?" element={<AboutPage />} />
+                <Route path="/profile" element={<Profile />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>

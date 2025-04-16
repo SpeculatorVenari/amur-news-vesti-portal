@@ -21,7 +21,6 @@ const Register = () => {
   const [emailError, setEmailError] = useState('');
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
-  const emailInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { register } = useAuth();
   const { toast } = useToast();
@@ -257,28 +256,15 @@ const Register = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center pointer-events-none opacity-40 pl-3">
-                  {!email && (
-                    <span className="text-gray-400 ml-2">example@mail.ru</span>
-                  )}
-                </div>
-                <Input
-                  ref={emailInputRef}
-                  id="email"
-                  type="email"
-                  placeholder=""
-                  value={email}
-                  onChange={handleEmailChange}
-                  required
-                  className={`pl-10 ${emailError ? "border-red-500" : ""} ${!email ? "text-transparent" : ""}`}
-                />
-                {!email && (
-                  <div className="absolute inset-0" onClick={() => emailInputRef.current?.focus()}>
-                    <span className="sr-only">Фокус на поле email</span>
-                  </div>
-                )}
-              </div>
+              <Input
+                id="email"
+                type="email"
+                placeholder="example@mail.ru"
+                value={email}
+                onChange={handleEmailChange}
+                required
+                className={emailError ? "border-red-500" : ""}
+              />
               {isCheckingEmail && (
                 <p className="text-sm text-gray-500">Проверка доступности...</p>
               )}
