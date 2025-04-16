@@ -17,6 +17,8 @@ import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 import CreateNews from "./pages/CreateNews";
 import EditNews from "./pages/EditNews";
+import AdminPanel from "./pages/AdminPanel";
+import AboutPage from "./pages/AboutPage";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +40,8 @@ const App = () => (
                 <Route path="/register" element={<Register />} />
                 <Route path="/create-news" element={<CreateNews />} />
                 <Route path="/edit-news/:id" element={<EditNews />} />
+                <Route path="/admin" element={<AdminPanel />} />
+                <Route path="/about/:section?" element={<AboutPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>

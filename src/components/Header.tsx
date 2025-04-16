@@ -10,7 +10,11 @@ import {
   LogOut, 
   Search as SearchIcon,
   Settings,
-  Users
+  Users,
+  Info,
+  Phone,
+  Shield,
+  Image
 } from 'lucide-react';
 import { 
   DropdownMenu,
@@ -45,10 +49,46 @@ const Header = () => {
               <Link to="/category/Спорт" className="px-3 py-2 rounded-md hover:bg-amur-lightBlue transition-colors">
                 Спорт
               </Link>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="text-white hover:bg-amur-lightBlue flex items-center">
+                    О нас
+                    <ChevronDown className="ml-1 w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem asChild>
+                    <Link to="/about/about" className="flex items-center">
+                      <Info className="mr-2 h-4 w-4" />
+                      <span>О проекте</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/about/contacts" className="flex items-center">
+                      <Phone className="mr-2 h-4 w-4" />
+                      <span>Контакты</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/about/privacy" className="flex items-center">
+                      <Shield className="mr-2 h-4 w-4" />
+                      <span>Политика конфиденциальности</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/about/ads" className="flex items-center">
+                      <Image className="mr-2 h-4 w-4" />
+                      <span>Реклама</span>
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
               {isAdmin && (
                 <Link to="/admin" className="px-3 py-2 rounded-md hover:bg-amur-lightBlue transition-colors flex items-center">
-                  <Users className="mr-1 h-4 w-4" />
-                  Пользователи
+                  <Settings className="mr-1 h-4 w-4" />
+                  Управление
                 </Link>
               )}
             </div>
@@ -84,7 +124,7 @@ const Header = () => {
                     <DropdownMenuItem asChild>
                       <Link to="/admin">
                         <Settings className="mr-2 h-4 w-4" />
-                        <span>Панель администратора</span>
+                        <span>Панель управления</span>
                       </Link>
                     </DropdownMenuItem>
                   )}
@@ -97,10 +137,10 @@ const Header = () => {
               </DropdownMenu>
             ) : (
               <div className="space-x-2">
-                <Button asChild variant="outline" className="text-white border-white hover:bg-amur-lightBlue">
+                <Button asChild variant="secondary" className="bg-white text-amur-blue hover:bg-gray-100">
                   <Link to="/login">Войти</Link>
                 </Button>
-                <Button asChild className="bg-white text-amur-blue hover:bg-gray-100">
+                <Button asChild className="bg-amur-lightBlue hover:bg-blue-600 text-white">
                   <Link to="/register">Регистрация</Link>
                 </Button>
               </div>
@@ -114,7 +154,7 @@ const Header = () => {
               </Button>
             ) : (
               <>
-                <Button asChild variant="outline" size="sm" className="text-white border-white hover:bg-amur-lightBlue">
+                <Button asChild variant="secondary" size="sm" className="bg-white text-amur-blue">
                   <Link to="/login">Войти</Link>
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
@@ -157,14 +197,49 @@ const Header = () => {
               >
                 Спорт
               </Link>
+              
+              <div className="px-3 py-2 text-white/80">О нас:</div>
+              <Link 
+                to="/about/about" 
+                className="block px-6 py-2 rounded-md hover:bg-amur-lightBlue transition-colors flex items-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Info className="mr-1 h-4 w-4" />
+                О проекте
+              </Link>
+              <Link 
+                to="/about/contacts" 
+                className="block px-6 py-2 rounded-md hover:bg-amur-lightBlue transition-colors flex items-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Phone className="mr-1 h-4 w-4" />
+                Контакты
+              </Link>
+              <Link 
+                to="/about/privacy" 
+                className="block px-6 py-2 rounded-md hover:bg-amur-lightBlue transition-colors flex items-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Shield className="mr-1 h-4 w-4" />
+                Политика
+              </Link>
+              <Link 
+                to="/about/ads" 
+                className="block px-6 py-2 rounded-md hover:bg-amur-lightBlue transition-colors flex items-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Image className="mr-1 h-4 w-4" />
+                Реклама
+              </Link>
+              
               {isAdmin && (
                 <Link 
                   to="/admin" 
                   className="block px-3 py-2 rounded-md hover:bg-amur-lightBlue transition-colors flex items-center"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <Users className="mr-1 h-4 w-4" />
-                  Пользователи
+                  <Settings className="mr-1 h-4 w-4" />
+                  Управление
                 </Link>
               )}
             </div>
@@ -195,7 +270,7 @@ const Header = () => {
                     >
                       <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>
                         <Settings className="mr-2 h-4 w-4" />
-                        <span>Панель администратора</span>
+                        <span>Панель управления</span>
                       </Link>
                     </Button>
                   )}
@@ -207,10 +282,10 @@ const Header = () => {
                 </div>
               ) : (
                 <div className="flex flex-col space-y-2">
-                  <Button asChild variant="outline" className="w-full text-white border-white hover:bg-amur-lightBlue">
+                  <Button asChild variant="secondary" className="w-full bg-white text-amur-blue hover:bg-gray-100">
                     <Link to="/login" onClick={() => setMobileMenuOpen(false)}>Войти</Link>
                   </Button>
-                  <Button asChild className="w-full bg-white text-amur-blue hover:bg-gray-100">
+                  <Button asChild className="w-full bg-amur-lightBlue hover:bg-blue-600 text-white">
                     <Link to="/register" onClick={() => setMobileMenuOpen(false)}>Регистрация</Link>
                   </Button>
                 </div>

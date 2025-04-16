@@ -33,3 +33,17 @@ export interface NewsArticle {
 }
 
 export type NewsCategory = 'Главное' | 'Экономика' | 'Культура' | 'Спорт' | 'Все';
+
+export interface SiteSettings {
+  contacts: {
+    address: string;
+    phone: string;
+    email: string;
+  };
+  about: {
+    text: string;
+    imageUrl: string;
+  };
+  privacy: string;
+  ads: string;
+}

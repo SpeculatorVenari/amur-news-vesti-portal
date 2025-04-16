@@ -11,6 +11,10 @@ interface AuthContextType {
   isAdmin: boolean;
 }
 
+interface StoredUser extends User {
+  password: string;
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
@@ -26,7 +30,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
+  // Инициализация хранилища данных при первой загрузке
   useEffect(() => {
+    const initializeStorage = () => {
+      // Проверяем, инициализировано ли уже хранилище
+      if (!localStorage.getItem('storageInitialized')) {
+        // Очищаем данные о пользователях
+        localStorage.removeItem('users');
+        localStorage.removeItem('user');
+        
+        // Создаем аккаунт администратора
+        const adminUser: StoredUser = {
+          id: 'admin-id',
+          username: 'admin',
+          email: 'admin@example.com',
+          role: 'admin',
+          password: 'admin228'
+        };
+        
+        localStorage.setItem('users', JSON.stringify([adminUser]));
+        localStorage.setItem('storageInitialized', 'true');
+        
+        // Инициализируем настройки сайта
+        if (!localStorage.getItem('siteSettings')) {
+          const defaultSettings = {
+            contacts: {
+              address: 'г. Благовещенск, ул. Ленина, 1',
+              phone: '+7 (4162) 12-34-56',
+              email: 'info@amurvesti.ru'
+            },
+            about: {
+              text: 'АмурВести - информационный портал Амурской области. Мы предоставляем свежие новости региона.',
+              imageUrl: '/placeholder.svg'
+            },
+            privacy: 'Политика конфиденциальности АмурВести...',
+            ads: 'Информация о рекламе на сайте АмурВести...'
+          };
+          
+          localStorage.setItem('siteSettings', JSON.stringify(defaultSettings));
+        }
+      }
+    };
+    
+    initializeStorage();
+    
     // Проверяем, есть ли сохраненный пользователь в localStorage
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -38,43 +85,75 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (username: string, password: string): Promise<boolean> => {
-    // В реальном приложении здесь должен быть запрос на сервер
-    // Для демонстрации создаем простую имитацию
-    if (username && password) {
-      // Проверяем, является ли пользователь администратором (для демо)
-      const isAdminUser = username.toLowerCase() === 'admin';
+    if (!username || !password) return false;
+    
+    const storedUsers = localStorage.getItem('users');
+    if (!storedUsers) return false;
+    
+    const users: StoredUser[] = JSON.parse(storedUsers);
+    const foundUser = users.find(
+      u => u.username.toLowerCase() === username.toLowerCase() && u.password === password
+    );
+    
+    if (foundUser) {
+      // Убираем пароль из данных пользователя перед сохранением в state
+      const { password: _, ...userWithoutPassword } = foundUser;
       
-      const newUser: User = {
-        id: Math.random().toString(36).substr(2, 9),
-        username,
-        email: `${username}@example.com`,
-        role: isAdminUser ? 'admin' : 'user'
-      };
-      setUser(newUser);
+      // Проверяем, забанен ли пользователь
+      if (foundUser.banned) {
+        return false;
+      }
+      
+      setUser(userWithoutPassword);
       setIsAuthenticated(true);
-      setIsAdmin(isAdminUser);
-      localStorage.setItem('user', JSON.stringify(newUser));
+      setIsAdmin(userWithoutPassword.role === 'admin');
+      localStorage.setItem('user', JSON.stringify(userWithoutPassword));
       return true;
     }
+    
     return false;
   };
 
   const register = async (username: string, email: string, password: string): Promise<boolean> => {
-    // В реальном приложении здесь должен быть запрос на сервер
-    if (username && email && password) {
-      const newUser: User = {
-        id: Math.random().toString(36).substr(2, 9),
-        username,
-        email,
-        role: 'user' // По умолчанию все новые пользователи имеют роль "user"
-      };
-      setUser(newUser);
-      setIsAuthenticated(true);
-      setIsAdmin(false);
-      localStorage.setItem('user', JSON.stringify(newUser));
-      return true;
+    if (!username || !email || !password) return false;
+    
+    // Получаем список всех пользователей
+    const storedUsers = localStorage.getItem('users');
+    let users: StoredUser[] = [];
+    
+    if (storedUsers) {
+      users = JSON.parse(storedUsers);
+      
+      // Проверяем, что имя пользователя и email уникальны
+      const isUsernameTaken = users.some(u => u.username.toLowerCase() === username.toLowerCase());
+      const isEmailTaken = users.some(u => u.email && u.email.toLowerCase() === email.toLowerCase());
+      
+      if (isUsernameTaken || isEmailTaken) {
+        return false;
+      }
     }
-    return false;
+    
+    // Создаем нового пользователя
+    const newUser: StoredUser = {
+      id: Math.random().toString(36).substr(2, 9),
+      username,
+      email,
+      role: 'user',
+      password
+    };
+    
+    // Добавляем пользователя в список и сохраняем
+    users.push(newUser);
+    localStorage.setItem('users', JSON.stringify(users));
+    
+    // Авторизуем пользователя
+    const { password: _, ...userWithoutPassword } = newUser;
+    setUser(userWithoutPassword);
+    setIsAuthenticated(true);
+    setIsAdmin(false);
+    localStorage.setItem('user', JSON.stringify(userWithoutPassword));
+    
+    return true;
   };
 
   const logout = () => {

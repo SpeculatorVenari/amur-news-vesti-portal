@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AtSign } from 'lucide-react';
 
 const MAX_USERNAME_LENGTH = 15;
 
@@ -21,6 +20,7 @@ const Register = () => {
   const [passwordError, setPasswordError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const emailInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { register } = useAuth();
@@ -40,7 +40,7 @@ const Register = () => {
     
     setIsCheckingUsername(true);
     
-    // Имитация проверки имени пользователя в базе данных
+    // Проверка имени пользователя в базе данных
     setTimeout(() => {
       const storedUsers = localStorage.getItem('users');
       let isUsernameTaken = false;
@@ -52,6 +52,35 @@ const Register = () => {
       
       setUsernameError(isUsernameTaken ? 'Это имя пользователя уже занято' : '');
       setIsCheckingUsername(false);
+    }, 500);
+  };
+  
+  // Проверка доступности email
+  const checkEmailAvailability = (email: string) => {
+    if (email.length === 0) {
+      setEmailError('');
+      return;
+    }
+    
+    if (!email.includes('@')) {
+      setEmailError('Email должен содержать символ @');
+      return;
+    }
+    
+    setIsCheckingEmail(true);
+    
+    // Проверка email в базе данных
+    setTimeout(() => {
+      const storedUsers = localStorage.getItem('users');
+      let isEmailTaken = false;
+      
+      if (storedUsers) {
+        const users = JSON.parse(storedUsers);
+        isEmailTaken = users.some((user: any) => user.email && user.email.toLowerCase() === email.toLowerCase());
+      }
+      
+      setEmailError(isEmailTaken ? 'Этот email уже зарегистрирован' : '');
+      setIsCheckingEmail(false);
     }, 500);
   };
   
@@ -67,17 +96,38 @@ const Register = () => {
     }
   };
   
+  // Проверка email при вводе
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEmail = e.target.value;
+    setEmail(newEmail);
+    
+    if (!newEmail.includes('@')) {
+      setEmailError('Email должен содержать символ @');
+    } else {
+      checkEmailAvailability(newEmail);
+    }
+  };
+  
   useEffect(() => {
-    // Запускаем проверку имени пользователя только если имя не пустое
-    // и прошло некоторое время с последнего ввода
-    const timeoutId = setTimeout(() => {
+    // Запускаем проверку имени пользователя
+    const usernameTimeoutId = setTimeout(() => {
       if (username && !isCheckingUsername) {
         checkUsernameAvailability(username);
       }
     }, 500);
     
-    return () => clearTimeout(timeoutId);
-  }, [username]);
+    // Запускаем проверку email
+    const emailTimeoutId = setTimeout(() => {
+      if (email && !isCheckingEmail) {
+        checkEmailAvailability(email);
+      }
+    }, 500);
+    
+    return () => {
+      clearTimeout(usernameTimeoutId);
+      clearTimeout(emailTimeoutId);
+    };
+  }, [username, email]);
   
   const validatePassword = (pass: string) => {
     if (pass.length < 12 || pass.length > 16) {
@@ -100,28 +150,24 @@ const Register = () => {
     setPassword(newPassword);
     setPasswordError(validatePassword(newPassword));
   };
-  
-  const validateEmail = (email: string) => {
-    if (!email.includes('@')) {
-      return "Email должен содержать символ @";
-    }
-    return "";
-  };
-  
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newEmail = e.target.value;
-    setEmail(newEmail);
-    setEmailError(validateEmail(newEmail));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Проверяем доступность имени пользователя
+    // Проверяем доступность имени пользователя и email
     if (usernameError) {
       toast({
         title: "Ошибка",
         description: usernameError,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (emailError) {
+      toast({
+        title: "Ошибка",
+        description: emailError,
         variant: "destructive",
       });
       return;
@@ -133,17 +179,6 @@ const Register = () => {
       toast({
         title: "Ошибка валидации",
         description: passwordValidationError,
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    const emailValidationError = validateEmail(email);
-    if (emailValidationError) {
-      setEmailError(emailValidationError);
-      toast({
-        title: "Ошибка валидации",
-        description: emailValidationError,
         variant: "destructive",
       });
       return;
@@ -244,6 +279,9 @@ const Register = () => {
                   </div>
                 )}
               </div>
+              {isCheckingEmail && (
+                <p className="text-sm text-gray-500">Проверка доступности...</p>
+              )}
               {emailError && (
                 <p className="text-red-500 text-sm">{emailError}</p>
               )}
@@ -280,7 +318,7 @@ const Register = () => {
             <Button 
               type="submit" 
               className="w-full bg-amur-blue hover:bg-amur-lightBlue"
-              disabled={isLoading || !!passwordError || !!emailError || !!usernameError || isCheckingUsername}
+              disabled={isLoading || !!passwordError || !!emailError || !!usernameError || isCheckingUsername || isCheckingEmail}
             >
               {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
             </Button>

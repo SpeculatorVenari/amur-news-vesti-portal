@@ -5,10 +5,13 @@ import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { User } from '../types';
-import { Ban, UserCheck, Search, UserX, Users, User as UserIcon } from 'lucide-react';
+import { User, SiteSettings } from '../types';
+import { Ban, UserCheck, Search, UserX, Users, Settings, User as UserIcon, Info, Phone, Shield, Image } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
 
 const AdminPanel = () => {
   const { isAdmin } = useAuth();
@@ -17,6 +20,25 @@ const AdminPanel = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [settings, setSettings] = useState<SiteSettings>({
+    contacts: {
+      address: '',
+      phone: '',
+      email: ''
+    },
+    about: {
+      text: '',
+      imageUrl: ''
+    },
+    privacy: '',
+    ads: ''
+  });
+
+  // Инициализация формы настроек сайта
+  const settingsForm = useForm<SiteSettings>({
+    defaultValues: settings
+  });
 
   useEffect(() => {
     if (!isAdmin) {
@@ -32,9 +54,21 @@ const AdminPanel = () => {
     // Загружаем пользователей из localStorage
     const storedUsers = localStorage.getItem('users');
     if (storedUsers) {
-      const parsedUsers = JSON.parse(storedUsers);
+      // Удаляем пароли из отображаемых данных
+      const parsedUsers = JSON.parse(storedUsers).map((user: any) => {
+        const { password, ...userWithoutPassword } = user;
+        return userWithoutPassword;
+      });
       setUsers(parsedUsers);
       setFilteredUsers(parsedUsers);
+    }
+
+    // Загружаем настройки сайта
+    const storedSettings = localStorage.getItem('siteSettings');
+    if (storedSettings) {
+      const parsedSettings = JSON.parse(storedSettings);
+      setSettings(parsedSettings);
+      settingsForm.reset(parsedSettings);
     }
   }, [isAdmin, navigate]);
 
@@ -53,22 +87,66 @@ const AdminPanel = () => {
 
   // Функция для бана/разбана пользователя
   const toggleBanUser = (userId: string) => {
-    const updatedUsers = users.map(user => {
+    // Обновляем список отображаемых пользователей
+    const updatedDisplayUsers = users.map(user => {
       if (user.id === userId) {
         return { ...user, banned: !user.banned };
       }
       return user;
     });
+    setUsers(updatedDisplayUsers);
     
-    setUsers(updatedUsers);
-    localStorage.setItem('users', JSON.stringify(updatedUsers));
+    // Обновляем данные в localStorage (сохраняя пароли)
+    const storedUsers = localStorage.getItem('users');
+    if (storedUsers) {
+      const parsedUsers = JSON.parse(storedUsers);
+      const updatedStoredUsers = parsedUsers.map((user: any) => {
+        if (user.id === userId) {
+          return { ...user, banned: !user.banned };
+        }
+        return user;
+      });
+      
+      localStorage.setItem('users', JSON.stringify(updatedStoredUsers));
+    }
     
-    const user = updatedUsers.find(u => u.id === userId);
+    const user = updatedDisplayUsers.find(u => u.id === userId);
     if (user) {
       toast({
         title: user.banned ? "Пользователь заблокирован" : "Пользователь разблокирован",
         description: `Пользователь ${user.username} успешно ${user.banned ? "заблокирован" : "разблокирован"}`,
       });
+    }
+  };
+
+  // Сохранение настроек сайта
+  const saveSettings = (data: SiteSettings) => {
+    localStorage.setItem('siteSettings', JSON.stringify(data));
+    setSettings(data);
+    toast({
+      title: "Настройки сохранены",
+      description: "Настройки сайта успешно обновлены",
+    });
+  };
+
+  // Обработчик изменения изображения
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        const updatedSettings = { 
+          ...settingsForm.getValues(),
+          about: {
+            ...settingsForm.getValues().about,
+            imageUrl: base64String
+          }
+        };
+        settingsForm.setValue('about.imageUrl', base64String);
+        setSettings(updatedSettings);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -81,18 +159,78 @@ const AdminPanel = () => {
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Панель администратора</CardTitle>
-          <CardDescription>Управление пользователями и контентом сайта</CardDescription>
+          <CardDescription>Управление пользователями и настройками сайта</CardDescription>
         </CardHeader>
         
         <CardContent>
-          <Tabs defaultValue="users">
+          <Tabs defaultValue="dashboard" value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-6">
+              <TabsTrigger value="dashboard" className="flex items-center">
+                <Settings className="mr-2 h-4 w-4" />
+                Главная
+              </TabsTrigger>
               <TabsTrigger value="users" className="flex items-center">
                 <Users className="mr-2 h-4 w-4" />
                 Пользователи
               </TabsTrigger>
-              <TabsTrigger value="stats">Статистика</TabsTrigger>
+              <TabsTrigger value="contacts" className="flex items-center">
+                <Phone className="mr-2 h-4 w-4" />
+                Контакты
+              </TabsTrigger>
+              <TabsTrigger value="about" className="flex items-center">
+                <Info className="mr-2 h-4 w-4" />
+                О проекте
+              </TabsTrigger>
+              <TabsTrigger value="privacy" className="flex items-center">
+                <Shield className="mr-2 h-4 w-4" />
+                Политика
+              </TabsTrigger>
+              <TabsTrigger value="ads" className="flex items-center">
+                <Image className="mr-2 h-4 w-4" />
+                Реклама
+              </TabsTrigger>
             </TabsList>
+            
+            <TabsContent value="dashboard">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <Card className="cursor-pointer hover:bg-gray-50" onClick={() => setActiveTab('users')}>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Пользователи</CardTitle>
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{users.length}</div>
+                    <p className="text-xs text-muted-foreground">
+                      Управление пользователями сайта
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="cursor-pointer hover:bg-gray-50" onClick={() => setActiveTab('contacts')}>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Контактные данные</CardTitle>
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">Настройка</div>
+                    <p className="text-xs text-muted-foreground">
+                      Адрес, телефон, почта
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="cursor-pointer hover:bg-gray-50" onClick={() => setActiveTab('about')}>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">О проекте</CardTitle>
+                    <Info className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">Информация</div>
+                    <p className="text-xs text-muted-foreground">
+                      Редактирование основной информации
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
             
             <TabsContent value="users" className="space-y-4">
               <div className="flex items-center space-x-2">
@@ -182,10 +320,122 @@ const AdminPanel = () => {
               </div>
             </TabsContent>
             
-            <TabsContent value="stats">
-              <div className="text-center py-10">
-                <p className="text-gray-500">Статистика пользователей и контента будет добавлена в будущих обновлениях.</p>
-              </div>
+            <TabsContent value="contacts">
+              <form onSubmit={settingsForm.handleSubmit(saveSettings)} className="space-y-6">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Адрес</Label>
+                    <Input
+                      id="address"
+                      value={settingsForm.watch('contacts.address')}
+                      onChange={(e) => settingsForm.setValue('contacts.address', e.target.value)}
+                      placeholder="Введите адрес организации"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Телефон</Label>
+                    <Input
+                      id="phone"
+                      value={settingsForm.watch('contacts.phone')}
+                      onChange={(e) => settingsForm.setValue('contacts.phone', e.target.value)}
+                      placeholder="Введите номер телефона"
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email для связи</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={settingsForm.watch('contacts.email')}
+                    onChange={(e) => settingsForm.setValue('contacts.email', e.target.value)}
+                    placeholder="Введите email для обратной связи"
+                  />
+                </div>
+                
+                <Button type="submit">Сохранить контактные данные</Button>
+              </form>
+            </TabsContent>
+            
+            <TabsContent value="about">
+              <form onSubmit={settingsForm.handleSubmit(saveSettings)} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="about-text">Информация о проекте</Label>
+                  <Textarea
+                    id="about-text"
+                    value={settingsForm.watch('about.text')}
+                    onChange={(e) => settingsForm.setValue('about.text', e.target.value)}
+                    placeholder="Описание проекта"
+                    rows={8}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="about-image">Изображение</Label>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <Input
+                        id="about-image"
+                        type="file"
+                        accept=".jpg,.jpeg,.png"
+                        onChange={handleImageChange}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Рекомендуемый формат: JPG или PNG
+                      </p>
+                    </div>
+                    <div className="flex justify-center items-center border rounded">
+                      {settingsForm.watch('about.imageUrl') ? (
+                        <img 
+                          src={settingsForm.watch('about.imageUrl')} 
+                          alt="О проекте" 
+                          className="max-h-40 object-contain"
+                        />
+                      ) : (
+                        <p className="text-gray-400 p-4">Изображение не выбрано</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <Button type="submit">Сохранить информацию</Button>
+              </form>
+            </TabsContent>
+            
+            <TabsContent value="privacy">
+              <form onSubmit={settingsForm.handleSubmit(saveSettings)} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="privacy-text">Политика конфиденциальности</Label>
+                  <Textarea
+                    id="privacy-text"
+                    value={settingsForm.watch('privacy')}
+                    onChange={(e) => settingsForm.setValue('privacy', e.target.value)}
+                    placeholder="Введите текст политики конфиденциальности"
+                    rows={15}
+                  />
+                </div>
+                
+                <Button type="submit">Сохранить политику конфиденциальности</Button>
+              </form>
+            </TabsContent>
+            
+            <TabsContent value="ads">
+              <form onSubmit={settingsForm.handleSubmit(saveSettings)} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="ads-text">Информация о рекламе</Label>
+                  <Textarea
+                    id="ads-text"
+                    value={settingsForm.watch('ads')}
+                    onChange={(e) => settingsForm.setValue('ads', e.target.value)}
+                    placeholder="Введите информацию о рекламе на сайте"
+                    rows={10}
+                  />
+                </div>
+                
+                <Button type="submit">Сохранить информацию о рекламе</Button>
+              </form>
             </TabsContent>
           </Tabs>
         </CardContent>
