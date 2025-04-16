@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -12,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
+import { Label } from '@/components/ui/label';
 
 const AdminPanel = () => {
   const { isAdmin } = useAuth();
@@ -35,7 +35,6 @@ const AdminPanel = () => {
     ads: ''
   });
 
-  // Инициализация формы настроек сайта
   const settingsForm = useForm<SiteSettings>({
     defaultValues: settings
   });
@@ -51,10 +50,8 @@ const AdminPanel = () => {
       return;
     }
     
-    // Загружаем пользователей из localStorage
     const storedUsers = localStorage.getItem('users');
     if (storedUsers) {
-      // Удаляем пароли из отображаемых данных
       const parsedUsers = JSON.parse(storedUsers).map((user: any) => {
         const { password, ...userWithoutPassword } = user;
         return userWithoutPassword;
@@ -63,7 +60,6 @@ const AdminPanel = () => {
       setFilteredUsers(parsedUsers);
     }
 
-    // Загружаем настройки сайта
     const storedSettings = localStorage.getItem('siteSettings');
     if (storedSettings) {
       const parsedSettings = JSON.parse(storedSettings);
@@ -72,7 +68,6 @@ const AdminPanel = () => {
     }
   }, [isAdmin, navigate]);
 
-  // Фильтрация пользователей при изменении поискового запроса
   useEffect(() => {
     if (!searchTerm.trim()) {
       setFilteredUsers(users);
@@ -85,9 +80,7 @@ const AdminPanel = () => {
     }
   }, [searchTerm, users]);
 
-  // Функция для бана/разбана пользователя
   const toggleBanUser = (userId: string) => {
-    // Обновляем список отображаемых пользователей
     const updatedDisplayUsers = users.map(user => {
       if (user.id === userId) {
         return { ...user, banned: !user.banned };
@@ -96,7 +89,6 @@ const AdminPanel = () => {
     });
     setUsers(updatedDisplayUsers);
     
-    // Обновляем данные в localStorage (сохраняя пароли)
     const storedUsers = localStorage.getItem('users');
     if (storedUsers) {
       const parsedUsers = JSON.parse(storedUsers);
@@ -119,7 +111,6 @@ const AdminPanel = () => {
     }
   };
 
-  // Сохранение настроек сайта
   const saveSettings = (data: SiteSettings) => {
     localStorage.setItem('siteSettings', JSON.stringify(data));
     setSettings(data);
@@ -129,7 +120,6 @@ const AdminPanel = () => {
     });
   };
 
-  // Обработчик изменения изображения
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
