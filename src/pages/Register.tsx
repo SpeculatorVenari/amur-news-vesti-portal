@@ -9,18 +9,75 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AtSign } from 'lucide-react';
 
+const MAX_USERNAME_LENGTH = 15;
+
 const Register = () => {
   const [username, setUsername] = useState('');
+  const [usernameError, setUsernameError] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
   const emailInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { register } = useAuth();
   const { toast } = useToast();
+
+  // Проверка доступности имени пользователя
+  const checkUsernameAvailability = (username: string) => {
+    if (username.length === 0) {
+      setUsernameError('');
+      return;
+    }
+    
+    if (username.length > MAX_USERNAME_LENGTH) {
+      setUsernameError(`Имя пользователя не должно превышать ${MAX_USERNAME_LENGTH} символов`);
+      return;
+    }
+    
+    setIsCheckingUsername(true);
+    
+    // Имитация проверки имени пользователя в базе данных
+    setTimeout(() => {
+      const storedUsers = localStorage.getItem('users');
+      let isUsernameTaken = false;
+      
+      if (storedUsers) {
+        const users = JSON.parse(storedUsers);
+        isUsernameTaken = users.some((user: any) => user.username.toLowerCase() === username.toLowerCase());
+      }
+      
+      setUsernameError(isUsernameTaken ? 'Это имя пользователя уже занято' : '');
+      setIsCheckingUsername(false);
+    }, 500);
+  };
+  
+  // Проверка имени пользователя при вводе
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newUsername = e.target.value;
+    setUsername(newUsername);
+    
+    if (newUsername.length > MAX_USERNAME_LENGTH) {
+      setUsernameError(`Имя пользователя не должно превышать ${MAX_USERNAME_LENGTH} символов`);
+    } else {
+      checkUsernameAvailability(newUsername);
+    }
+  };
+  
+  useEffect(() => {
+    // Запускаем проверку имени пользователя только если имя не пустое
+    // и прошло некоторое время с последнего ввода
+    const timeoutId = setTimeout(() => {
+      if (username && !isCheckingUsername) {
+        checkUsernameAvailability(username);
+      }
+    }, 500);
+    
+    return () => clearTimeout(timeoutId);
+  }, [username]);
   
   const validatePassword = (pass: string) => {
     if (pass.length < 12 || pass.length > 16) {
@@ -59,6 +116,16 @@ const Register = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Проверяем доступность имени пользователя
+    if (usernameError) {
+      toast({
+        title: "Ошибка",
+        description: usernameError,
+        variant: "destructive",
+      });
+      return;
+    }
     
     const passwordValidationError = validatePassword(password);
     if (passwordValidationError) {
@@ -138,15 +205,25 @@ const Register = () => {
                 type="text"
                 placeholder="Введите имя пользователя"
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={handleUsernameChange}
                 required
+                maxLength={MAX_USERNAME_LENGTH}
+                className={usernameError ? "border-red-500" : ""}
               />
+              {isCheckingUsername && (
+                <p className="text-sm text-gray-500">Проверка доступности...</p>
+              )}
+              {usernameError && (
+                <p className="text-red-500 text-sm">{usernameError}</p>
+              )}
+              <p className="text-xs text-gray-500">
+                Имя пользователя должно быть уникальным и не превышать {MAX_USERNAME_LENGTH} символов.
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
                 <div className="absolute inset-0 flex items-center pointer-events-none opacity-40 pl-3">
-                  <AtSign className="h-5 w-5 text-gray-400" />
                   {!email && (
                     <span className="text-gray-400 ml-2">example@mail.ru</span>
                   )}
@@ -203,7 +280,7 @@ const Register = () => {
             <Button 
               type="submit" 
               className="w-full bg-amur-blue hover:bg-amur-lightBlue"
-              disabled={isLoading || !!passwordError || !!emailError}
+              disabled={isLoading || !!passwordError || !!emailError || !!usernameError || isCheckingUsername}
             >
               {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
             </Button>

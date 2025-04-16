@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -7,6 +7,7 @@ import { NewsCategory } from '../types';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
+import { Image, Upload } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -24,6 +25,9 @@ import {
 } from './ui/select';
 import { useToast } from '@/hooks/use-toast';
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png"];
+
 const formSchema = z.object({
   title: z.string().min(5, {
     message: "Заголовок должен содержать минимум 5 символов",
@@ -34,10 +38,8 @@ const formSchema = z.object({
   content: z.string().min(50, {
     message: "Содержание новости должно содержать минимум 50 символов",
   }),
-  imageUrl: z.string().url({
-    message: "Пожалуйста, введите корректный URL изображения",
-  }),
-  category: z.enum(['Общество', 'Экономика', 'Культура', 'Спорт'] as [NewsCategory, ...NewsCategory[]]),
+  imageUrl: z.string().optional(),
+  category: z.enum(['Главное', 'Экономика', 'Культура', 'Спорт'] as [NewsCategory, ...NewsCategory[]]),
   author: z.string().optional(),
 });
 
@@ -45,23 +47,28 @@ type NewsFormValues = z.infer<typeof formSchema>;
 
 interface NewsFormProps {
   onSubmit: (data: NewsFormValues) => void;
-  defaultValues?: Partial<NewsFormValues>;
+  initialData?: Partial<NewsFormValues>;
   isEdit?: boolean;
 }
 
 const NewsForm: React.FC<NewsFormProps> = ({
   onSubmit,
-  defaultValues = {
+  initialData,
+  isEdit = false,
+}) => {
+  const { toast } = useToast();
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const defaultValues = {
     title: '',
     summary: '',
     content: '',
     imageUrl: '',
-    category: 'Общество',
+    category: 'Главное' as NewsCategory,
     author: '',
-  },
-  isEdit = false,
-}) => {
-  const { toast } = useToast();
+    ...initialData
+  };
   
   const form = useForm<NewsFormValues>({
     resolver: zodResolver(formSchema),
@@ -69,11 +76,55 @@ const NewsForm: React.FC<NewsFormProps> = ({
   });
 
   const handleSubmit = (data: NewsFormValues) => {
+    // Если была загружена локальная картинка, используем её URL
+    if (selectedImage) {
+      data.imageUrl = selectedImage;
+    }
+    
     onSubmit(data);
     toast({
       title: isEdit ? "Новость обновлена" : "Новость создана",
       description: `Новость "${data.title}" успешно ${isEdit ? 'обновлена' : 'создана'}.`,
     });
+  };
+  
+  const handleImageClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+  
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    
+    if (!file) return;
+    
+    if (file.size > MAX_FILE_SIZE) {
+      toast({
+        title: "Ошибка",
+        description: "Размер файла не должен превышать 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+      toast({
+        title: "Ошибка",
+        description: "Разрешены только файлы формата JPG и PNG",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (e.target && typeof e.target.result === 'string') {
+        setSelectedImage(e.target.result);
+        form.setValue('imageUrl', e.target.result);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -134,9 +185,55 @@ const NewsForm: React.FC<NewsFormProps> = ({
           name="imageUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>URL изображения</FormLabel>
+              <FormLabel>Изображение</FormLabel>
               <FormControl>
-                <Input placeholder="https://example.com/image.jpg" {...field} />
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      className="flex items-center space-x-2"
+                      onClick={handleImageClick}
+                    >
+                      <Upload size={16} />
+                      <span>Загрузить с компьютера</span>
+                    </Button>
+                    <span className="text-sm text-gray-500">или</span>
+                    <Input 
+                      placeholder="https://example.com/image.jpg" 
+                      {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        if (e.target.value) {
+                          setSelectedImage(null);
+                        }
+                      }}
+                    />
+                  </div>
+                  
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept=".jpg,.jpeg,.png"
+                    onChange={handleImageChange}
+                  />
+                  
+                  {(selectedImage || field.value) && (
+                    <div className="mt-3 relative max-w-xs">
+                      <div className="border rounded p-2 bg-gray-50">
+                        <img 
+                          src={selectedImage || field.value} 
+                          alt="Превью изображения" 
+                          className="max-h-40 object-contain mx-auto"
+                        />
+                      </div>
+                      <div className="text-center mt-2 text-sm text-gray-500">
+                        Превью изображения
+                      </div>
+                    </div>
+                  )}
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -156,7 +253,7 @@ const NewsForm: React.FC<NewsFormProps> = ({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="Общество">Общество</SelectItem>
+                  <SelectItem value="Главное">Главное</SelectItem>
                   <SelectItem value="Экономика">Экономика</SelectItem>
                   <SelectItem value="Культура">Культура</SelectItem>
                   <SelectItem value="Спорт">Спорт</SelectItem>

@@ -89,11 +89,21 @@ const EditNews = () => {
     return null;
   }
 
+  // Подготавливаем данные для формы
+  const initialFormData = {
+    title: article.title,
+    summary: article.summary,
+    content: article.content,
+    imageUrl: article.imageUrl,
+    category: article.category,
+    author: article.author || ''
+  };
+
   return (
     <div className="news-container py-8">
       <h1 className="text-3xl font-bold mb-6 text-amur-dark">Редактирование новости</h1>
       <div className="bg-white p-6 rounded-lg shadow-md">
-        <NewsForm onSubmit={handleUpdateNews} initialData={article as any} />
+        <NewsForm onSubmit={handleUpdateNews} initialData={initialFormData} isEdit={true} />
       </div>
     </div>
   );

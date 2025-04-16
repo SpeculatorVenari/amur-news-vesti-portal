@@ -9,7 +9,8 @@ import {
   User as UserIcon, 
   LogOut, 
   Search as SearchIcon,
-  Settings
+  Settings,
+  Users
 } from 'lucide-react';
 import { 
   DropdownMenu,
@@ -44,6 +45,12 @@ const Header = () => {
               <Link to="/category/Спорт" className="px-3 py-2 rounded-md hover:bg-amur-lightBlue transition-colors">
                 Спорт
               </Link>
+              {isAdmin && (
+                <Link to="/admin" className="px-3 py-2 rounded-md hover:bg-amur-lightBlue transition-colors flex items-center">
+                  <Users className="mr-1 h-4 w-4" />
+                  Пользователи
+                </Link>
+              )}
             </div>
           </div>
 
@@ -150,6 +157,16 @@ const Header = () => {
               >
                 Спорт
               </Link>
+              {isAdmin && (
+                <Link 
+                  to="/admin" 
+                  className="block px-3 py-2 rounded-md hover:bg-amur-lightBlue transition-colors flex items-center"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Users className="mr-1 h-4 w-4" />
+                  Пользователи
+                </Link>
+              )}
             </div>
             
             <div className="mt-4">

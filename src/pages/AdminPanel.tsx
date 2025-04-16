@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { User } from '../types';
-import { Ban, UserCheck, Search, UserX } from 'lucide-react';
+import { Ban, UserCheck, Search, UserX, Users, User as UserIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 
@@ -87,7 +87,10 @@ const AdminPanel = () => {
         <CardContent>
           <Tabs defaultValue="users">
             <TabsList className="mb-6">
-              <TabsTrigger value="users">Пользователи</TabsTrigger>
+              <TabsTrigger value="users" className="flex items-center">
+                <Users className="mr-2 h-4 w-4" />
+                Пользователи
+              </TabsTrigger>
               <TabsTrigger value="stats">Статистика</TabsTrigger>
             </TabsList>
             
