@@ -10,7 +10,7 @@ import CommentLikeDislike from './CommentLikeDislike';
 import { Eye, EyeOff, Trash2, UserCog } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import AdminCommentActions from './AdminCommentActions';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
 interface CommentSectionProps {
@@ -121,9 +121,34 @@ const CommentSection: React.FC<CommentSectionProps> = ({
     return false;
   };
 
+  // Функция для безопасного преобразования строковой даты в объект Date
+  const safeParseDate = (dateString: string) => {
+    try {
+      // Проверяем, является ли дата форматом ISO
+      if (dateString.includes('T') || dateString.includes('-')) {
+        return parseISO(dateString);
+      }
+      
+      // Пробуем распарсить из локализованного формата DD.MM.YYYY
+      if (dateString.includes('.')) {
+        const [day, month, year] = dateString.split('.').map(Number);
+        return new Date(year, month - 1, day);
+      }
+      
+      // Если ничего не сработало, возвращаем текущую дату
+      return new Date();
+    } catch (error) {
+      console.error("Error parsing date:", dateString, error);
+      return new Date();
+    }
+  };
+
   // Компонент для отображения комментария
   const CommentItem = ({ comment }: { comment: Comment }) => {
     if (!canSeeHiddenComment(comment)) return null;
+    
+    // Безопасно парсим дату
+    const commentDate = safeParseDate(comment.createdAt);
     
     return (
       <div className={`bg-white p-4 rounded-md shadow-sm ${comment.hidden ? 'border-l-4 border-orange-400' : ''}`}>
@@ -152,7 +177,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
                 )}
               </div>
               <div className="text-sm text-gray-500">
-                {formatDistanceToNow(new Date(comment.createdAt), { 
+                {formatDistanceToNow(commentDate, { 
                   addSuffix: true,
                   locale: ru 
                 })}

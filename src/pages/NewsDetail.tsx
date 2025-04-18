@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getNewsById } from '../data/newsData';
@@ -149,11 +148,12 @@ const NewsDetail = () => {
   const addComment = (content: string) => {
     if (!user || !article) return;
     
+    // Используем ISO формат даты для совместимости
     const newComment: Comment = {
       id: Math.random().toString(36).substr(2, 9),
       content,
       author: user,
-      createdAt: new Date().toLocaleDateString('ru-RU'),
+      createdAt: new Date().toISOString(),
       likes: [],
       dislikes: [],
       hidden: false

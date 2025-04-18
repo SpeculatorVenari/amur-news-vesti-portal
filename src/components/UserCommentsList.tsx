@@ -4,7 +4,7 @@ import { Comment } from '../types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
 interface UserCommentsListProps {
@@ -25,6 +25,28 @@ const UserCommentsList: React.FC<UserCommentsListProps> = ({ comments }) => {
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
+  // Функция для безопасного преобразования строковой даты в объект Date
+  const safeParseDate = (dateString: string) => {
+    try {
+      // Проверяем, является ли дата форматом ISO
+      if (dateString.includes('T') || dateString.includes('-')) {
+        return parseISO(dateString);
+      }
+      
+      // Пробуем распарсить из локализованного формата DD.MM.YYYY
+      if (dateString.includes('.')) {
+        const [day, month, year] = dateString.split('.').map(Number);
+        return new Date(year, month - 1, day);
+      }
+      
+      // Если ничего не сработало, возвращаем текущую дату
+      return new Date();
+    } catch (error) {
+      console.error("Error parsing date:", dateString, error);
+      return new Date();
+    }
+  };
+
   return (
     <div className="space-y-4">
       {sortedComments.map(comment => (
@@ -38,7 +60,7 @@ const UserCommentsList: React.FC<UserCommentsListProps> = ({ comments }) => {
                 {comment.articleTitle}
               </Link>
               <div className="text-sm text-gray-500">
-                {formatDistanceToNow(new Date(comment.createdAt), { 
+                {formatDistanceToNow(safeParseDate(comment.createdAt), { 
                   addSuffix: true,
                   locale: ru 
                 })}
