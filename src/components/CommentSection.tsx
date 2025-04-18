@@ -9,6 +9,9 @@ import { useToast } from '@/components/ui/use-toast';
 import CommentLikeDislike from './CommentLikeDislike';
 import { Eye, EyeOff, Trash2, UserCog } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import AdminCommentActions from './AdminCommentActions';
+import { formatDistanceToNow } from 'date-fns';
+import { ru } from 'date-fns/locale';
 
 interface CommentSectionProps {
   comments: Comment[];
@@ -17,6 +20,7 @@ interface CommentSectionProps {
   onDeleteComment?: (commentId: string) => void;
   onLikeComment?: (commentId: string) => void;
   onDislikeComment?: (commentId: string) => void;
+  onBanUser?: (userId: string) => void; 
   articleId: string;
 }
 
@@ -27,6 +31,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({
   onDeleteComment,
   onLikeComment,
   onDislikeComment,
+  onBanUser,
   articleId
 }) => {
   const { isAuthenticated, user, isAdmin } = useAuth();
@@ -146,36 +151,24 @@ const CommentSection: React.FC<CommentSectionProps> = ({
                   </Badge>
                 )}
               </div>
-              <div className="text-sm text-gray-500">{comment.createdAt}</div>
+              <div className="text-sm text-gray-500">
+                {formatDistanceToNow(new Date(comment.createdAt), { 
+                  addSuffix: true,
+                  locale: ru 
+                })}
+              </div>
             </div>
           </div>
           
           {/* Админ-функции для комментариев */}
           {isAdmin && (
-            <div className="flex space-x-2">
-              {onHideComment && (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  title={comment.hidden ? "Показать комментарий" : "Скрыть комментарий"}
-                  onClick={() => onHideComment(comment.id)}
-                >
-                  {comment.hidden ? <Eye size={16} /> : <EyeOff size={16} />}
-                </Button>
-              )}
-              
-              {onDeleteComment && (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  title="Удалить комментарий"
-                  onClick={() => onDeleteComment(comment.id)}
-                  className="text-red-500 hover:bg-red-50"
-                >
-                  <Trash2 size={16} />
-                </Button>
-              )}
-            </div>
+            <AdminCommentActions
+              commentAuthor={comment.author}
+              isHidden={!!comment.hidden}
+              onHideComment={() => onHideComment && onHideComment(comment.id)}
+              onDeleteComment={() => onDeleteComment && onDeleteComment(comment.id)}
+              onBanUser={() => onBanUser && onBanUser(comment.author.id)}
+            />
           )}
         </div>
         
@@ -235,7 +228,6 @@ const CommentSection: React.FC<CommentSectionProps> = ({
       {comments.length > 0 ? (
         <div className="space-y-6">
           {comments
-            .filter(comment => !comment.parentId) // Только корневые комментарии
             .sort((a, b) => (b.likes?.length || 0) - (a.likes?.length || 0)) // Сортируем по количеству лайков
             .map(comment => (
               <CommentItem key={comment.id} comment={comment} />

@@ -37,7 +37,12 @@ const UserCommentsList: React.FC<UserCommentsListProps> = ({ comments }) => {
               >
                 {comment.articleTitle}
               </Link>
-              <div className="text-sm text-gray-500">{comment.createdAt}</div>
+              <div className="text-sm text-gray-500">
+                {formatDistanceToNow(new Date(comment.createdAt), { 
+                  addSuffix: true,
+                  locale: ru 
+                })}
+              </div>
             </div>
             
             <div className="flex space-x-2 mb-1">

@@ -170,25 +170,14 @@ const AdminPanel = () => {
       
       articles.forEach((article: any) => {
         if (article.comments && Array.isArray(article.comments)) {
-          const collectComments = (comments: Comment[], articleInfo: any) => {
-            comments.forEach((comment: Comment) => {
-              if (comment.author.id === userId) {
-                allComments.push({
-                  ...comment,
-                  articleId: article.id,
-                  articleTitle: article.title
-                });
-              }
-              
-              if (comment.replies && comment.replies.length > 0) {
-                collectComments(comment.replies, articleInfo);
-              }
-            });
-          };
-          
-          collectComments(article.comments, {
-            id: article.id,
-            title: article.title
+          article.comments.forEach((comment: Comment) => {
+            if (comment.author.id === userId) {
+              allComments.push({
+                ...comment,
+                articleId: article.id,
+                articleTitle: article.title
+              });
+            }
           });
         }
       });
@@ -502,7 +491,7 @@ const AdminPanel = () => {
                 
                 <div className="space-y-4">
                   <Label htmlFor="about-image">Изображение</Label>
-                  <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2'}`}>
+                  <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                     <div>
                       <Input
                         id="about-image"
