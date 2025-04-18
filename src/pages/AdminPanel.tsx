@@ -461,6 +461,7 @@ const AdminPanel = () => {
                                         value={settingsForm.watch('contacts.address')}
                                         onChange={(e) => settingsForm.setValue('contacts.address', e.target.value)}
                                         placeholder="Введите адрес организации"
+                                        className="h-10"
                                       />
                                     </div>
                                     
@@ -471,6 +472,7 @@ const AdminPanel = () => {
                                         value={settingsForm.watch('contacts.phone')}
                                         onChange={(e) => settingsForm.setValue('contacts.phone', e.target.value)}
                                         placeholder="Введите номер телефона"
+                                        className="h-10"
                                       />
                                     </div>
                                   </div>
@@ -487,7 +489,8 @@ const AdminPanel = () => {
                                         value={settingsForm.watch('about.text')}
                                         onChange={(e) => settingsForm.setValue('about.text', e.target.value)}
                                         placeholder="Описание проекта"
-                                        rows={8}
+                                        rows={6}
+                                        className="resize-none"
                                       />
                                     </div>
                                     
@@ -500,17 +503,18 @@ const AdminPanel = () => {
                                             type="file"
                                             accept=".jpg,.jpeg,.png"
                                             onChange={handleImageChange}
+                                            className="h-10"
                                           />
                                           <p className="text-xs text-gray-500 mt-1">
                                             Рекомендуемый формат: JPG или PNG
                                           </p>
                                         </div>
-                                        <div className="flex justify-center items-center border rounded p-4">
+                                        <div className="flex justify-center items-center border rounded p-2 h-24">
                                           {settingsForm.watch('about.imageUrl') ? (
                                             <img 
                                               src={settingsForm.watch('about.imageUrl')} 
                                               alt="О проекте" 
-                                              className="max-h-40 object-contain"
+                                              className="max-h-full object-contain"
                                             />
                                           ) : (
                                             <p className="text-gray-400">Изображение не выбрано</p>
@@ -556,7 +560,7 @@ const AdminPanel = () => {
                                 </div>
                               )}
                               
-                              <Button type="submit">
+                              <Button type="submit" className="mt-4">
                                 Сохранить изменения
                               </Button>
                             </form>
