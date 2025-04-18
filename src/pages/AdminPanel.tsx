@@ -230,7 +230,7 @@ const AdminPanel = () => {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto py-4 px-2 min-h-screen">
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Панель администратора</CardTitle>
@@ -239,10 +239,10 @@ const AdminPanel = () => {
         
         <CardContent>
           <Tabs defaultValue="dashboard" value={activeTab} onValueChange={setActiveTab}>
-            <div className="flex flex-col md:flex-row gap-6">
-              <div className="w-full md:w-64 shrink-0">
-                <ScrollArea className="h-[calc(100vh-300px)]">
-                  <TabsList className="flex flex-col w-full gap-2">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="w-full md:w-64 shrink-0 border rounded-lg p-2 bg-gray-50">
+                <ScrollArea className="h-[calc(100vh-250px)]">
+                  <TabsList className="flex flex-col w-full gap-2 bg-transparent">
                     <TabsTrigger value="dashboard" className="flex items-center justify-start w-full">
                       <Settings className="mr-2 h-4 w-4" />
                       Главная
@@ -277,307 +277,294 @@ const AdminPanel = () => {
                 </ScrollArea>
               </div>
 
-              <div className="flex-1">
-                <ScrollArea className="h-[calc(100vh-300px)]">
-                  <TabsContent value="dashboard" className="m-0">
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                      <Card className="cursor-pointer hover:bg-gray-50" onClick={() => setActiveTab('users')}>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                          <CardTitle className="text-sm font-medium">Пользователи</CardTitle>
-                          <Users className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold">{users.length}</div>
-                          <p className="text-xs text-muted-foreground">
-                            Управление пользователями сайта
-                          </p>
-                        </CardContent>
-                      </Card>
-                      <Card className="cursor-pointer hover:bg-gray-50" onClick={() => setActiveTab('contacts')}>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                          <CardTitle className="text-sm font-medium">Контактные данные</CardTitle>
-                          <Phone className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold">Настройка</div>
-                          <p className="text-xs text-muted-foreground">
-                            Адрес, телефон, почта
-                          </p>
-                        </CardContent>
-                      </Card>
-                      <Card className="cursor-pointer hover:bg-gray-50" onClick={() => setActiveTab('about')}>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                          <CardTitle className="text-sm font-medium">О проекте</CardTitle>
-                          <Info className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold">Информация</div>
-                          <p className="text-xs text-muted-foreground">
-                            Редактирование основной информации
-                          </p>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="users" className="m-0 space-y-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="relative flex-1">
-                        <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                        <Input
-                          placeholder="Поиск пользователей..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-8"
-                        />
+              <div className="flex-1 border rounded-lg p-4 bg-white">
+                <ScrollArea className="h-[calc(100vh-250px)]">
+                  <div className="pr-4">
+                    <TabsContent value="dashboard" className="m-0">
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        <Card className="cursor-pointer hover:bg-gray-50" onClick={() => setActiveTab('users')}>
+                          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Пользователи</CardTitle>
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                          </CardHeader>
+                          <CardContent>
+                            <div className="text-2xl font-bold">{users.length}</div>
+                            <p className="text-xs text-muted-foreground">
+                              Управление пользователями сайта
+                            </p>
+                          </CardContent>
+                        </Card>
+                        <Card className="cursor-pointer hover:bg-gray-50" onClick={() => setActiveTab('contacts')}>
+                          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">Контактные данные</CardTitle>
+                            <Phone className="h-4 w-4 text-muted-foreground" />
+                          </CardHeader>
+                          <CardContent>
+                            <div className="text-2xl font-bold">Настройка</div>
+                            <p className="text-xs text-muted-foreground">
+                              Адрес, телефон, почта
+                            </p>
+                          </CardContent>
+                        </Card>
+                        <Card className="cursor-pointer hover:bg-gray-50" onClick={() => setActiveTab('about')}>
+                          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">О проекте</CardTitle>
+                            <Info className="h-4 w-4 text-muted-foreground" />
+                          </CardHeader>
+                          <CardContent>
+                            <div className="text-2xl font-bold">Информация</div>
+                            <p className="text-xs text-muted-foreground">
+                              Редактирование основной информации
+                            </p>
+                          </CardContent>
+                        </Card>
                       </div>
-                    </div>
+                    </TabsContent>
                     
-                    <div className="overflow-x-auto">
-                      <table className="w-full border-collapse">
-                        <thead>
-                          <tr className="bg-gray-100">
-                            <th className="p-3 text-left">Имя пользователя</th>
-                            <th className="p-3 text-left">Email</th>
-                            <th className="p-3 text-left">Роль</th>
-                            <th className="p-3 text-left">Статус</th>
-                            <th className="p-3 text-left">Действия</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredUsers.length > 0 ? (
-                            filteredUsers.map((user) => (
-                              <tr key={user.id} className="border-b border-gray-200">
-                                <td className="p-3">{user.username}</td>
-                                <td className="p-3">{user.email || 'Н/Д'}</td>
-                                <td className="p-3">
-                                  {user.role === 'admin' ? (
-                                    <span className="inline-flex items-center">
-                                      <UserCog size={16} className="mr-1 text-purple-600" />
-                                      Администратор
-                                    </span>
-                                  ) : 'Пользователь'}
-                                </td>
-                                <td className="p-3">
-                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                    user.banned ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                                  }`}>
-                                    {user.banned ? (
-                                      <>
-                                        <UserX size={12} className="mr-1" />
-                                        Заблокирован
-                                      </>
-                                    ) : (
-                                      <>
-                                        <UserCheck size={12} className="mr-1" />
-                                        Активен
-                                      </>
-                                    )}
-                                  </span>
-                                </td>
-                                <td className="p-3 flex space-x-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => showUserComments(user.id)}
-                                    className="flex items-center space-x-1 text-blue-600 hover:bg-blue-50"
-                                  >
-                                    <MessageSquare size={16} />
-                                    <span>Комментарии</span>
-                                  </Button>
-                                  {user.role !== 'admin' && (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => toggleBanUser(user.id)}
-                                      className={`flex items-center space-x-1 ${
-                                        user.banned 
-                                          ? 'text-green-600 hover:bg-green-50' 
-                                          : 'text-red-600 hover:bg-red-50'
-                                      }`}
-                                    >
+                    <TabsContent value="users" className="m-0 space-y-4">
+                      <div className="flex items-center space-x-2">
+                        <div className="relative flex-1">
+                          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                          <Input
+                            placeholder="Поиск пользователей..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-8"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse">
+                          <thead>
+                            <tr className="bg-gray-100">
+                              <th className="p-3 text-left">Имя пользователя</th>
+                              <th className="p-3 text-left">Email</th>
+                              <th className="p-3 text-left">Роль</th>
+                              <th className="p-3 text-left">Статус</th>
+                              <th className="p-3 text-left">Действия</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filteredUsers.length > 0 ? (
+                              filteredUsers.map((user) => (
+                                <tr key={user.id} className="border-b border-gray-200">
+                                  <td className="p-3">{user.username}</td>
+                                  <td className="p-3">{user.email || 'Н/Д'}</td>
+                                  <td className="p-3">
+                                    {user.role === 'admin' ? (
+                                      <span className="inline-flex items-center">
+                                        <UserCog size={16} className="mr-1 text-purple-600" />
+                                        Администратор
+                                      </span>
+                                    ) : 'Пользователь'}
+                                  </td>
+                                  <td className="p-3">
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                      user.banned ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                                    }`}>
                                       {user.banned ? (
                                         <>
-                                          <UserCheck size={16} />
-                                          <span>Разблокировать</span>
+                                          <UserX size={12} className="mr-1" />
+                                          Заблокирован
                                         </>
                                       ) : (
                                         <>
-                                          <Ban size={16} />
-                                          <span>Заблокировать</span>
+                                          <UserCheck size={12} className="mr-1" />
+                                          Активен
                                         </>
                                       )}
+                                    </span>
+                                  </td>
+                                  <td className="p-3 flex space-x-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => showUserComments(user.id)}
+                                      className="flex items-center space-x-1 text-blue-600 hover:bg-blue-50"
+                                    >
+                                      <MessageSquare size={16} />
+                                      <span>Комментарии</span>
                                     </Button>
-                                  )}
+                                    {user.role !== 'admin' && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => toggleBanUser(user.id)}
+                                        className={`flex items-center space-x-1 ${
+                                          user.banned 
+                                            ? 'text-green-600 hover:bg-green-50' 
+                                            : 'text-red-600 hover:bg-red-50'
+                                        }`}
+                                      >
+                                        {user.banned ? (
+                                          <>
+                                            <UserCheck size={16} />
+                                            <span>Разблокировать</span>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Ban size={16} />
+                                            <span>Заблокировать</span>
+                                          </>
+                                        )}
+                                      </Button>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td colSpan={5} className="p-3 text-center text-gray-500">
+                                  {searchTerm ? 'Пользователи не найдены' : 'Нет зарегистрированных пользователей'}
                                 </td>
                               </tr>
-                            ))
-                          ) : (
-                            <tr>
-                              <td colSpan={5} className="p-3 text-center text-gray-500">
-                                {searchTerm ? 'Пользователи не найдены' : 'Нет зарегистрированных пользователей'}
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="userComments" className="m-0">
-                    {selectedUserId && (
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                          <h3 className="text-lg font-semibold">
-                            Комментарии пользователя: {users.find(u => u.id === selectedUserId)?.username}
-                          </h3>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => setActiveTab('users')}
-                          >
-                            Вернуться к списку пользователей
-                          </Button>
-                        </div>
-                        
-                        <UserCommentsList comments={userComments} />
+                            )}
+                          </tbody>
+                        </table>
                       </div>
-                    )}
-                  </TabsContent>
-                  
-                  <TabsContent value="contacts" className="m-0">
-                    <Card>
-                      <CardContent className="pt-6">
-                        <form onSubmit={settingsForm.handleSubmit(saveSettings)} className="space-y-6">
-                          <div className="grid gap-4 md:grid-cols-2">
-                            <div className="space-y-2">
-                              <Label htmlFor="address">Адрес</Label>
-                              <Input
-                                id="address"
-                                value={settingsForm.watch('contacts.address')}
-                                onChange={(e) => settingsForm.setValue('contacts.address', e.target.value)}
-                                placeholder="Введите адрес организации"
-                              />
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <Label htmlFor="phone">Телефон</Label>
-                              <Input
-                                id="phone"
-                                value={settingsForm.watch('contacts.phone')}
-                                onChange={(e) => settingsForm.setValue('contacts.phone', e.target.value)}
-                                placeholder="Введите номер телефона"
-                              />
-                            </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="userComments" className="m-0">
+                      {selectedUserId && (
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center">
+                            <h3 className="text-lg font-semibold">
+                              Комментарии пользователя: {users.find(u => u.id === selectedUserId)?.username}
+                            </h3>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => setActiveTab('users')}
+                            >
+                              Вернуться к списку пользователей
+                            </Button>
                           </div>
                           
-                          <div className="space-y-2">
-                            <Label htmlFor="email">Email для связи</Label>
-                            <Input
-                              id="email"
-                              type="email"
-                              value={settingsForm.watch('contacts.email')}
-                              onChange={(e) => settingsForm.setValue('contacts.email', e.target.value)}
-                              placeholder="Введите email для обратной связи"
-                            />
-                          </div>
-                          
-                          <Button type="submit">Сохранить контактные данные</Button>
-                        </form>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                  
-                  <TabsContent value="about" className="m-0">
-                    <Card>
-                      <CardContent className="pt-6">
-                        <form onSubmit={settingsForm.handleSubmit(saveSettings)} className="space-y-6">
-                          <div className="space-y-2">
-                            <Label htmlFor="about-text">Информация о проекте</Label>
-                            <Textarea
-                              id="about-text"
-                              value={settingsForm.watch('about.text')}
-                              onChange={(e) => settingsForm.setValue('about.text', e.target.value)}
-                              placeholder="Описание проекта"
-                              rows={8}
-                            />
-                          </div>
-                          
-                          <div className="space-y-4">
-                            <Label htmlFor="about-image">Изображение</Label>
-                            <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-                              <div>
-                                <Input
-                                  id="about-image"
-                                  type="file"
-                                  accept=".jpg,.jpeg,.png"
-                                  onChange={handleImageChange}
-                                />
-                                <p className="text-xs text-gray-500 mt-1">
-                                  Рекомендуемый формат: JPG или PNG
-                                </p>
-                              </div>
-                              <div className="flex justify-center items-center border rounded p-4">
-                                {settingsForm.watch('about.imageUrl') ? (
-                                  <img 
-                                    src={settingsForm.watch('about.imageUrl')} 
-                                    alt="О проекте" 
-                                    className="max-h-40 object-contain"
-                                  />
-                                ) : (
-                                  <p className="text-gray-400">Изображение не выбрано</p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <Button type="submit">Сохранить информацию</Button>
-                        </form>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                  
-                  <TabsContent value="privacy" className="m-0">
-                    <Card>
-                      <CardContent className="pt-6">
-                        <form onSubmit={settingsForm.handleSubmit(saveSettings)} className="space-y-6">
-                          <div className="space-y-2">
-                            <Label htmlFor="privacy-text">Политика конфиденциальности</Label>
-                            <Textarea
-                              id="privacy-text"
-                              value={settingsForm.watch('privacy')}
-                              onChange={(e) => settingsForm.setValue('privacy', e.target.value)}
-                              placeholder="Введите текст политики конфиденциальности"
-                              rows={15}
-                            />
-                          </div>
-                          
-                          <Button type="submit">Сохранить политику конфиденциальности</Button>
-                        </form>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                  
-                  <TabsContent value="ads" className="m-0">
-                    <Card>
-                      <CardContent className="pt-6">
-                        <form onSubmit={settingsForm.handleSubmit(saveSettings)} className="space-y-6">
-                          <div className="space-y-2">
-                            <Label htmlFor="ads-text">Информация о рекламе</Label>
-                            <Textarea
-                              id="ads-text"
-                              value={settingsForm.watch('ads')}
-                              onChange={(e) => settingsForm.setValue('ads', e.target.value)}
-                              placeholder="Введите информацию о рекламе на сайте"
-                              rows={10}
-                            />
-                          </div>
-                          
-                          <Button type="submit">Сохранить информацию о рекламе</Button>
-                        </form>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
+                          <UserCommentsList comments={userComments} />
+                        </div>
+                      )}
+                    </TabsContent>
+                    
+                    {['contacts', 'about', 'privacy', 'ads'].map((section) => (
+                      <TabsContent key={section} value={section} className="m-0">
+                        <Card className="border-0 shadow-none">
+                          <CardContent className="p-0">
+                            <form onSubmit={settingsForm.handleSubmit(saveSettings)} className="space-y-6">
+                              {section === 'contacts' && (
+                                <div className="space-y-6">
+                                  <div className="grid gap-4 md:grid-cols-2">
+                                    <div className="space-y-2">
+                                      <Label htmlFor="address">Адрес</Label>
+                                      <Input
+                                        id="address"
+                                        value={settingsForm.watch('contacts.address')}
+                                        onChange={(e) => settingsForm.setValue('contacts.address', e.target.value)}
+                                        placeholder="Введите адрес организации"
+                                      />
+                                    </div>
+                                    
+                                    <div className="space-y-2">
+                                      <Label htmlFor="phone">Телефон</Label>
+                                      <Input
+                                        id="phone"
+                                        value={settingsForm.watch('contacts.phone')}
+                                        onChange={(e) => settingsForm.setValue('contacts.phone', e.target.value)}
+                                        placeholder="Введите номер телефона"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {section === 'about' && (
+                                <div className="space-y-6">
+                                  <div className="grid gap-4 md:grid-cols-2">
+                                    <div className="space-y-2">
+                                      <Label htmlFor="about-text">Информация о проекте</Label>
+                                      <Textarea
+                                        id="about-text"
+                                        value={settingsForm.watch('about.text')}
+                                        onChange={(e) => settingsForm.setValue('about.text', e.target.value)}
+                                        placeholder="Описание проекта"
+                                        rows={8}
+                                      />
+                                    </div>
+                                    
+                                    <div className="space-y-4">
+                                      <Label htmlFor="about-image">Изображение</Label>
+                                      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+                                        <div>
+                                          <Input
+                                            id="about-image"
+                                            type="file"
+                                            accept=".jpg,.jpeg,.png"
+                                            onChange={handleImageChange}
+                                          />
+                                          <p className="text-xs text-gray-500 mt-1">
+                                            Рекомендуемый формат: JPG или PNG
+                                          </p>
+                                        </div>
+                                        <div className="flex justify-center items-center border rounded p-4">
+                                          {settingsForm.watch('about.imageUrl') ? (
+                                            <img 
+                                              src={settingsForm.watch('about.imageUrl')} 
+                                              alt="О проекте" 
+                                              className="max-h-40 object-contain"
+                                            />
+                                          ) : (
+                                            <p className="text-gray-400">Изображение не выбрано</p>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {section === 'privacy' && (
+                                <div className="space-y-6">
+                                  <div className="grid gap-4 md:grid-cols-2">
+                                    <div className="space-y-2">
+                                      <Label htmlFor="privacy-text">Политика конфиденциальности</Label>
+                                      <Textarea
+                                        id="privacy-text"
+                                        value={settingsForm.watch('privacy')}
+                                        onChange={(e) => settingsForm.setValue('privacy', e.target.value)}
+                                        placeholder="Введите текст политики конфиденциальности"
+                                        rows={15}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {section === 'ads' && (
+                                <div className="space-y-6">
+                                  <div className="grid gap-4 md:grid-cols-2">
+                                    <div className="space-y-2">
+                                      <Label htmlFor="ads-text">Информация о рекламе</Label>
+                                      <Textarea
+                                        id="ads-text"
+                                        value={settingsForm.watch('ads')}
+                                        onChange={(e) => settingsForm.setValue('ads', e.target.value)}
+                                        placeholder="Введите информацию о рекламе на сайте"
+                                        rows={10}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              <Button type="submit">
+                                Сохранить изменения
+                              </Button>
+                            </form>
+                          </CardContent>
+                        </Card>
+                      </TabsContent>
+                    ))}
+                  </div>
                 </ScrollArea>
               </div>
             </div>

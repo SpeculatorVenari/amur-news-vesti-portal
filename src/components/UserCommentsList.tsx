@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Comment } from '../types';
 import { Card, CardContent } from '@/components/ui/card';
@@ -48,7 +47,7 @@ const UserCommentsList: React.FC<UserCommentsListProps> = ({ comments }) => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full max-h-[calc(100vh-300px)] overflow-y-auto pr-4">
       {sortedComments.map(comment => (
         <Card key={comment.id} className={comment.hidden ? 'border-orange-300' : ''}>
           <CardContent className="pt-4">
