@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import UserCommentsList from '../components/UserCommentsList';
 import { useForm } from 'react-hook-form';
+import { useIsMobile } from '../hooks/use-mobile';
 
 const AdminPanel = () => {
   const { isAdmin } = useAuth();
@@ -37,6 +38,7 @@ const AdminPanel = () => {
   });
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [userComments, setUserComments] = useState<Comment[]>([]);
+  const isMobile = useIsMobile();
 
   const settingsForm = useForm<SiteSettings>({
     defaultValues: settings
@@ -104,7 +106,6 @@ const AdminPanel = () => {
       
       localStorage.setItem('users', JSON.stringify(updatedStoredUsers));
 
-      // Reset user's likes and dislikes if banned
       if (updatedDisplayUsers.find(u => u.id === userId)?.banned) {
         removeUserInteractions(userId);
       }
@@ -119,21 +120,18 @@ const AdminPanel = () => {
     }
   };
 
-  // Remove all user interactions (likes, dislikes) when banned
   const removeUserInteractions = (userId: string) => {
     const articlesData = localStorage.getItem('articles');
     if (articlesData) {
       const articles = JSON.parse(articlesData);
       
       const updatedArticles = articles.map((article: any) => {
-        // Remove likes/dislikes from article
         const updatedArticle = {
           ...article,
           likes: article.likes.filter((id: string) => id !== userId),
           dislikes: article.dislikes.filter((id: string) => id !== userId)
         };
         
-        // Remove likes/dislikes from comments
         const processComments = (comments: Comment[]): Comment[] => {
           return comments.map(comment => {
             const updatedComment = {
@@ -242,7 +240,7 @@ const AdminPanel = () => {
   }
 
   return (
-    <div className="news-container py-8">
+    <div className="container mx-auto py-8 px-4">
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Панель администратора</CardTitle>
@@ -251,7 +249,7 @@ const AdminPanel = () => {
         
         <CardContent>
           <Tabs defaultValue="dashboard" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-6 flex flex-wrap justify-center">
+            <TabsList className="mb-6 flex flex-wrap justify-center gap-2">
               <TabsTrigger value="dashboard" className="flex items-center">
                 <Settings className="mr-2 h-4 w-4" />
                 Главная
@@ -279,7 +277,7 @@ const AdminPanel = () => {
               {selectedUserId && (
                 <TabsTrigger value="userComments" className="flex items-center">
                   <MessageSquare className="mr-2 h-4 w-4" />
-                  Комментарии пользователя
+                  Комментарии
                 </TabsTrigger>
               )}
             </TabsList>
@@ -502,9 +500,9 @@ const AdminPanel = () => {
                   />
                 </div>
                 
-                <div className="space-y-2">
+                <div className="space-y-4">
                   <Label htmlFor="about-image">Изображение</Label>
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2'}`}>
                     <div>
                       <Input
                         id="about-image"
@@ -516,7 +514,7 @@ const AdminPanel = () => {
                         Рекомендуемый формат: JPG или PNG
                       </p>
                     </div>
-                    <div className="flex justify-center items-center border rounded">
+                    <div className="flex justify-center items-center border rounded p-4">
                       {settingsForm.watch('about.imageUrl') ? (
                         <img 
                           src={settingsForm.watch('about.imageUrl')} 
@@ -524,7 +522,7 @@ const AdminPanel = () => {
                           className="max-h-40 object-contain"
                         />
                       ) : (
-                        <p className="text-gray-400 p-4">Изображение не выбрано</p>
+                        <p className="text-gray-400">Изображение не выбрано</p>
                       )}
                     </div>
                   </div>

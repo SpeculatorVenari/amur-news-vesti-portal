@@ -2,10 +2,10 @@
 import React from 'react';
 import { Comment } from '../types';
 import { Card, CardContent } from '@/components/ui/card';
-import { formatDistanceToNow } from 'date-fns';
-import { ru } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
+import { formatDistanceToNow } from 'date-fns';
+import { ru } from 'date-fns/locale';
 
 interface UserCommentsListProps {
   comments: Comment[];
@@ -46,18 +46,7 @@ const UserCommentsList: React.FC<UserCommentsListProps> = ({ comments }) => {
                   Скрыт
                 </Badge>
               )}
-              {comment.parentId && (
-                <Badge variant="outline" className="text-blue-500 border-blue-300">
-                  Ответ на комментарий
-                </Badge>
-              )}
             </div>
-            
-            {comment.replyingTo && (
-              <div className="text-sm text-gray-500 mb-1">
-                Ответ пользователю: <span className="font-medium">{comment.replyingTo}</span>
-              </div>
-            )}
             
             <p className="text-gray-700 whitespace-pre-wrap">{comment.content}</p>
             
